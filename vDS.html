@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Квартира 3D Планировщик - ASP Studio</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel: #16213e;
+            --panel2: #0f3460;
+            --accent: #e94560;
+            --text: #eee;
+            --text2: #ccc;
+            --border: #444;
+            --btn: #2a2a4a;
+            --btn-hover: #3a3a5a;
+            --selected: #ffaa00;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .top-bar {
+            display: flex; align-items: center; gap: 10px; padding: 8px 15px;
+            background: var(--panel); border-bottom: 1px solid var(--border);
+            flex-shrink: 0; flex-wrap: wrap; z-index: 10;
+        }
+        .top-bar .logo { font-weight: bold; font-size: 18px; color: var(--accent); margin-right: 10px; white-space: nowrap; }
+        .top-bar input[type="text"] {
+            background: var(--btn); border: 1px solid var(--border); color: var(--text);
+            padding: 6px 10px; border-radius: 4px; font-size: 14px; width: 200px; outline: none;
+        }
+        .top-bar input[type="text"]:focus { border-color: var(--accent); }
+        .top-bar button {
+            background: var(--btn); border: 1px solid var(--border); color: var(--text);
+            padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .top-bar button:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .top-bar button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .left-tools {
+            width: 200px; background: var(--panel); border-right: 1px solid var(--border);
+            padding: 10px; overflow-y: auto; flex-shrink: 0; z-index: 5;
+        }
+        .left-tools h3 { font-size: 13px; color: var(--text2); margin: 10px 0 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tool-btn {
+            display: block; width: 100%; padding: 8px 10px; margin-bottom: 4px;
+            background: var(--btn); border: 1px solid var(--border); color: var(--text);
+            border-radius: 4px; cursor: pointer; font-size: 13px; text-align: left; transition: all 0.2s;
+        }
+        .tool-btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .tool-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .tool-btn .icon { margin-right: 6px; }
+        .tool-group { margin-bottom: 8px; }
+        .tool-group-title { font-size: 11px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .right-panel {
+            width: 240px; background: var(--panel); border-left: 1px solid var(--border);
+            padding: 10px; overflow-y: auto; flex-shrink: 0; z-index: 5;
+        }
+        .right-panel h3 { font-size: 13px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .prop-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 13px; }
+        .prop-row label { flex: 0 0 60px; color: var(--text2); }
+        .prop-row input, .prop-row select {
+            flex: 1; background: var(--btn); border: 1px solid var(--border); color: var(--text);
+            padding: 4px 8px; border-radius: 3px; font-size: 13px; outline: none; min-width: 0;
+        }
+        .prop-row input:focus, .prop-row select:focus { border-color: var(--accent); }
+        .prop-row input[type="color"] { padding: 2px; height: 30px; cursor: pointer; }
+        .canvas-wrapper { flex: 1; position: relative; overflow: hidden; background: #0a0a1a; cursor: crosshair; }
+        #canvas2d { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        #canvas3d-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; background: #111; }
+        .view-toggle { position: absolute; top: 10px; right: 10px; z-index: 20; display: flex; gap: 5px; }
+        .view-toggle button {
+            background: var(--btn); border: 1px solid var(--border); color: var(--text);
+            padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: all 0.2s;
+        }
+        .view-toggle button:hover { background: var(--btn-hover); }
+        .view-toggle button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .signature { position: absolute; bottom: 8px; right: 12px; z-index: 20; font-size: 12px; color: rgba(255,255,255,0.5); pointer-events: none; letter-spacing: 0.5px; font-style: italic; }
+        .status-bar { position: absolute; bottom: 0; left: 0; right: 0; background: var(--panel); padding: 4px 12px; font-size: 11px; color: var(--text2); z-index: 15; border-top: 1px solid var(--border); display: flex; justify-content: space-between; pointer-events: none; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal h2 { font-size: 16px; margin-bottom: 12px; color: var(--accent); }
+        .modal .prop-row { margin-bottom: 10px; }
+        .modal button { background: var(--accent); border: none; color: #fff; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 8px; }
+        .modal button.secondary { background: var(--btn); border: 1px solid var(--border); margin-left: 8px; }
+        .furniture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
+        .furniture-btn { padding: 6px 8px; background: var(--btn); border: 1px solid var(--border); color: var(--text); border-radius: 3px; cursor: pointer; font-size: 11px; text-align: center; transition: all 0.15s; }
+        .furniture-btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .furniture-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .wall-type-selector { display: flex; gap: 4px; margin-bottom: 6px; }
+        .wall-type-btn { flex: 1; padding: 5px 4px; background: var(--btn); border: 1px solid var(--border); color: var(--text); border-radius: 3px; cursor: pointer; font-size: 11px; text-align: center; }
+        .wall-type-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .hidden { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--panel); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        @media (max-width: 768px) {
+            .left-tools { width: 140px; padding: 6px; }
+            .right-panel { width: 180px; padding: 6px; }
+            .top-bar input[type="text"] { width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <span class="logo">🏠 ASP Studio</span>
+        <input type="text" id="projectName" value="Моя квартира" title="Название проекта">
+        <button id="btnSave" title="Сохранить проект">💾 Сохранить</button>
+        <button id="btnLoad" title="Загрузить проект">📂 Загрузить</button>
+        <button id="btnExportJSON" title="Экспорт в JSON">📋 Экспорт</button>
+        <button id="btnImportJSON" title="Импорт из JSON">📥 Импорт</button>
+        <button id="btnClear" title="Очистить всё" style="border-color:#aa3333;">🗑 Очистить</button>
+        <span style="flex:1;"></span>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px;">
+            Высота потолка:
+            <input type="number" id="ceilingHeight" value="2.7" step="0.1" min="2.0" max="4.0" style="width:60px;background:var(--btn);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:3px;font-size:12px;">
+            м
+        </label>
+    </div>
+    <div class="main-container">
+        <div class="left-tools" id="leftTools">
+            <div class="tool-group">
+                <div class="tool-group-title">Основное</div>
+                <button class="tool-btn active" data-mode="select" title="Выбор и перемещение">🔍 Выбор</button>
+                <button class="tool-btn" data-mode="draw_wall" title="Рисовать стены">📏 Стена</button>
+                <button class="tool-btn" data-mode="add_window" title="Добавить окно">🪟 Окно</button>
+                <button class="tool-btn" data-mode="add_door" title="Добавить дверь">🚪 Дверь</button>
+                <button class="tool-btn" data-mode="add_arch" title="Добавить арку">🏛 Арка</button>
+                <button class="tool-btn" data-mode="add_balcony" title="Добавить балкон">🌿 Балкон</button>
+            </div>
+            <div class="tool-group" id="wallTypeGroup">
+                <div class="tool-group-title">Тип стены</div>
+                <div class="wall-type-selector">
+                    <button class="wall-type-btn active" data-wall-type="outer">Внешняя</button>
+                    <button class="wall-type-btn" data-wall-type="inner">Внутр.</button>
+                </div>
+                <div class="prop-row" style="font-size:11px;">
+                    <label>Толщина:</label>
+                    <input type="number" id="wallThickness" value="0.4" step="0.05" min="0.1" max="1.0" style="font-size:11px;">
+                </div>
+            </div>
+            <div class="tool-group" id="furnitureGroup">
+                <div class="tool-group-title">Мебель</div>
+                <div style="margin-bottom:4px;">
+                    <select id="furnitureCategory" style="width:100%;background:var(--btn);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:3px;font-size:12px;">
+                        <option value="kitchen">Кухня</option>
+                        <option value="living">Комната</option>
+                        <option value="hallway">Прихожая</option>
+                        <option value="bathroom">Ванная</option>
+                    </select>
+                </div>
+                <div class="furniture-grid" id="furnitureGrid"></div>
+            </div>
+        </div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="canvas2d"></canvas>
+            <div id="canvas3d-container"></div>
+            <div class="view-toggle">
+                <button id="btn2D" class="active">2D</button>
+                <button id="btn3D">3D</button>
+            </div>
+            <div class="signature">ASP Studio</div>
+            <div class="status-bar">
+                <span id="statusText">Режим: Выбор — клик по объекту для выбора, перетаскивание для перемещения</span>
+                <span id="zoomStatus">Масштаб: 100%</span>
+            </div>
+        </div>
+        <div class="right-panel" id="rightPanel">
+            <h3>Свойства</h3>
+            <div id="propertiesContent">
+                <p style="font-size:12px;color:var(--text2);">Выберите объект для редактирования</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent">
+            <h2 id="modalTitle">Заголовок</h2>
+            <div id="modalBody"></div>
+            <button id="modalOk">OK</button>
+            <button id="modalCancel" class="secondary">Отмена</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
+        const state = {
+            mode: 'select',
+            wallType: 'outer',
+            wallThickness: 0.4,
+            ceilingHeight: 2.7,
+            selectedObject: null,
+            selectedWall: null,
+            selectedFurniture: null,
+            selectedOpening: null,
+            selectedBalcony: null,
+            furnitureCategory: 'kitchen',
+            furnitureType: 'table',
+            drawPoints: [],
+            isDrawing: false,
+            zoom: 1,
+            offsetX: 0,
+            offsetY: 0,
+            panning: false,
+            panStartX: 0,
+            panStartY: 0,
+            dragObject: null,
+            dragOffsetX: 0,
+            dragOffsetY: 0,
+            project: {
+                name: 'Моя квартира',
+                ceilingHeight: 2.7,
+                walls: [],
+                points: [],
+                openings: [],
+                balcony: null,
+                furniture: [],
+            },
+            nextId: 1,
+            view3d: false,
+        };
+
+        // ==================== ДАННЫЕ МЕБЕЛИ ====================
+        const furnitureData = {
+            kitchen: [
+                { type: 'table', name: 'Стол', defaultW: 1.2, defaultD: 0.8, defaultH: 0.75, color: '#8B5A2B' },
+                { type: 'chair', name: 'Стул', defaultW: 0.45, defaultD: 0.45, defaultH: 0.9, color: '#8B5A2B' },
+                { type: 'fridge', name: 'Холодильник', defaultW: 0.7, defaultD: 0.7, defaultH: 1.8, color: '#C0C0C0' },
+                { type: 'sink', name: 'Мойка', defaultW: 0.8, defaultD: 0.6, defaultH: 0.85, color: '#A0A0A0' },
+                { type: 'cabinet', name: 'Шкаф', defaultW: 1.0, defaultD: 0.6, defaultH: 2.0, color: '#8B5A2B' },
+                { type: 'wall_cabinet', name: 'Подвесной шкаф', defaultW: 0.8, defaultD: 0.35, defaultH: 0.7, color: '#8B5A2B' },
+                { type: 'stove', name: 'Плита', defaultW: 0.6, defaultD: 0.6, defaultH: 0.85, color: '#404040' },
+            ],
+            living: [
+                { type: 'shelf', name: 'Стеллаж', defaultW: 0.8, defaultD: 0.3, defaultH: 2.0, color: '#8B5A2B' },
+                { type: 'sofa', name: 'Диван', defaultW: 2.0, defaultD: 0.9, defaultH: 0.8, color: '#4A6FA5' },
+                { type: 'table', name: 'Стол', defaultW: 1.2, defaultD: 0.8, defaultH: 0.75, color: '#8B5A2B' },
+                { type: 'armchair', name: 'Кресло', defaultW: 0.8, defaultD: 0.8, defaultH: 0.9, color: '#4A6FA5' },
+            ],
+            hallway: [
+                { type: 'wardrobe', name: 'Шкаф-купе', defaultW: 1.5, defaultD: 0.6, defaultH: 2.2, color: '#8B5A2B' },
+                { type: 'bench', name: 'Скамейка', defaultW: 0.8, defaultD: 0.4, defaultH: 0.45, color: '#8B5A2B' },
+            ],
+            bathroom: [
+                { type: 'toilet', name: 'Унитаз', defaultW: 0.4, defaultD: 0.7, defaultH: 0.8, color: '#FFFFFF' },
+                { type: 'shower', name: 'Душевая кабинка', defaultW: 0.9, defaultD: 0.9, defaultH: 2.0, color: '#A0D0FF' },
+                { type: 'washing_machine', name: 'Стиральная машина', defaultW: 0.6, defaultD: 0.6, defaultH: 0.85, color: '#FFFFFF' },
+                { type: 'bathroom_sink', name: 'Раковина', defaultW: 0.6, defaultD: 0.5, defaultH: 0.85, color: '#FFFFFF' },
+                { type: 'bathtub', name: 'Ванна', defaultW: 1.7, defaultD: 0.7, defaultH: 0.6, color: '#FFFFFF' },
+            ],
+        };
+
+        // ==================== DOM ЭЛЕМЕНТЫ ====================
+        const canvas = document.getElementById('canvas2d');
+        const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const canvas3dContainer = document.getElementById('canvas3d-container');
+        const btn2D = document.getElementById('btn2D');
+        const btn3D = document.getElementById('btn3D');
+        const projectNameInput = document.getElementById('projectName');
+        const ceilingHeightInput = document.getElementById('ceilingHeight');
+        const statusText = document.getElementById('statusText');
+        const zoomStatus = document.getElementById('zoomStatus');
+        const propertiesContent = document.getElementById('propertiesContent');
+        const furnitureGrid = document.getElementById('furnitureGrid');
+        const furnitureCategorySelect = document.getElementById('furnitureCategory');
+        const wallThicknessInput = document.getElementById('wallThickness');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalOk = document.getElementById('modalOk');
+        const modalCancel = document.getElementById('modalCancel');
+
+        // ==================== 3D СЦЕНА ====================
+        let threeScene, threeCamera, threeRenderer, threeControls;
+        let threeInitialized = false;
+        let threeAnimationId = null;
+
+        function initThree() {
+            if (threeInitialized) return;
+            threeInitialized = true;
+            const w = canvas3dContainer.clientWidth;
+            const h = canvas3dContainer.clientHeight;
+            threeScene = new THREE.Scene();
+            threeScene.background = new THREE.Color(0x111122);
+            threeCamera = new THREE.PerspectiveCamera(55, w / h, 0.1, 100);
+            threeCamera.position.set(8, 8, 8);
+            threeCamera.lookAt(0, 1, 0);
+            threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+            threeRenderer.setSize(w, h);
+            threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            threeRenderer.shadowMap.enabled = true;
+            threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            canvas3dContainer.appendChild(threeRenderer.domElement);
+            threeControls = new OrbitControls(threeCamera, threeRenderer.domElement);
+            threeControls.target.set(0, 1, 0);
+            threeControls.enableDamping = true;
+            threeControls.dampingFactor = 0.1;
+            threeControls.maxPolarAngle = Math.PI / 2;
+            threeControls.update();
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            threeScene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(10, 15, 10);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 50;
+            dirLight.shadow.camera.left = -15;
+            dirLight.shadow.camera.right = 15;
+            dirLight.shadow.camera.top = 15;
+            dirLight.shadow.camera.bottom = -15;
+            dirLight.shadow.bias = -0.0001;
+            threeScene.add(dirLight);
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.3);
+            threeScene.add(hemiLight);
+
+            const grid = new THREE.GridHelper(20, 20, 0x333355, 0x222244);
+            grid.position.y = -0.01;
+            threeScene.add(grid);
+
+            // Запускаем цикл рендеринга
+            function animate() {
+                threeAnimationId = requestAnimationFrame(animate);
+                threeControls.update();
+                threeRenderer.render(threeScene, threeCamera);
+            }
+            animate();
+        }
+
+        function render3D() {
+            if (threeInitialized && threeRenderer) {
+                threeRenderer.render(threeScene, threeCamera);
+            }
+        }
+
+        function build3DScene() {
+            if (!threeInitialized) return;
+            // Удаляем все объекты кроме света и сетки
+            while (threeScene.children.length > 0) {
+                const child = threeScene.children[0];
+                if (child instanceof THREE.GridHelper || child instanceof THREE.AmbientLight ||
+                    child instanceof THREE.DirectionalLight || child instanceof THREE.HemisphereLight) {
+                    break;
+                }
+                threeScene.remove(child);
+            }
+
+            const p = state.project;
+            const ch = p.ceilingHeight || 2.7;
+
+            // Пол
+            const allX = [];
+            const allZ = [];
+            p.points.forEach(pt => { allX.push(pt.x); allZ.push(pt.y); });
+            p.walls.forEach(w => {
+                const p1 = p.points.find(pp => pp.id === w.point1);
+                const p2 = p.points.find(pp => pp.id === w.point2);
+                if (p1 && p2) { allX.push(p1.x, p2.x); allZ.push(p1.y, p2.y); }
+            });
+            let minX = allX.length ? Math.min(...allX) - 2 : -5;
+            let maxX = allX.length ? Math.max(...allX) + 2 : 5;
+            let minZ = allZ.length ? Math.min(...allZ) - 2 : -5;
+            let maxZ = allZ.length ? Math.max(...allZ) + 2 : 5;
+            const floorW = maxX - minX;
+            const floorD = maxZ - minZ;
+            const floorGeo = new THREE.BoxGeometry(floorW, 0.1, floorD);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x3a3a5a, roughness: 0.8, metalness: 0.1 });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.position.set((minX + maxX) / 2, -0.05, (minZ + maxZ) / 2);
+            floorMesh.receiveShadow = true;
+            threeScene.add(floorMesh);
+
+            // Стены
+            p.walls.forEach(w => {
+                const p1 = p.points.find(pp => pp.id === w.point1);
+                const p2 = p.points.find(pp => pp.id === w.point2);
+                if (!p1 || !p2) return;
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                if (len < 0.01) return;
+                const angle = Math.atan2(dy, dx);
+                const thick = w.thickness || state.wallThickness;
+                const wallGeo = new THREE.BoxGeometry(len, ch, thick);
+                const wallColor = w.type === 'outer' ? 0x8a8a9a : 0x9a9aaa;
+                const wallMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.7, metalness: 0.05 });
+                const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+                wallMesh.position.set((p1.x + p2.x) / 2, ch / 2, (p1.y + p2.y) / 2);
+                wallMesh.rotation.y = -angle;
+                wallMesh.castShadow = true;
+                wallMesh.receiveShadow = true;
+                wallMesh.userData = { type: 'wall', id: w.id };
+                threeScene.add(wallMesh);
+
+                // Проёмы (окна, двери, арки) на этой стене
+                p.openings.forEach(op => {
+                    if (op.wallId !== w.id) return;
+                    const t = op.position || 0.5;
+                    const opW = op.width || 0.8;
+                    const opH = op.height || (op.type === 'window' ? 1.5 : 2.1);
+                    const opX = p1.x + dx * t;
+                    const opZ = p1.y + dy * t;
+                    const opY = op.type === 'window' ? opH / 2 + 0.8 : opH / 2;
+                    const opGeo = new THREE.BoxGeometry(opW, opH, thick + 0.05);
+                    let opColor = 0x88ccff;
+                    if (op.type === 'door') opColor = 0x8B5A2B;
+                    if (op.type === 'arch') opColor = 0xcccccc;
+                    if (op.color) opColor = new THREE.Color(op.color);
+                    const opMat = new THREE.MeshStandardMaterial({ color: opColor, roughness: 0.5, metalness: 0.1 });
+                    const opMesh = new THREE.Mesh(opGeo, opMat);
+                    opMesh.position.set(opX, opY, opZ);
+                    opMesh.rotation.y = -angle;
+                    opMesh.userData = { type: 'opening', id: op.id };
+                    threeScene.add(opMesh);
+                });
+            });
+
+            // Потолок (полупрозрачный, чтобы видеть сверху)
+            if (allX.length) {
+                const ceilGeo = new THREE.BoxGeometry(floorW, 0.05, floorD);
+                const ceilMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, transparent: true, opacity: 0.15,
+                    roughness: 0.9, metalness: 0 });
+                const ceilMesh = new THREE.Mesh(ceilGeo, ceilMat);
+                ceilMesh.position.set((minX + maxX) / 2, ch + 0.025, (minZ + maxZ) / 2);
+                threeScene.add(ceilMesh);
+            }
+
+            // Балкон
+            if (p.balcony) {
+                const b = p.balcony;
+                const bGeo = new THREE.BoxGeometry(b.width || 1.5, 0.15, b.depth || 1.0);
+                const bMat = new THREE.MeshStandardMaterial({ color: 0x777788, roughness: 0.8, metalness: 0.05 });
+                const bMesh = new THREE.Mesh(bGeo, bMat);
+                bMesh.position.set(b.x || 0, 0.075, b.y || 0);
+                bMesh.castShadow = true;
+                bMesh.receiveShadow = true;
+                bMesh.userData = { type: 'balcony', id: b.id };
+                threeScene.add(bMesh);
+                const railGeo = new THREE.BoxGeometry((b.width || 1.5) - 0.1, 0.9, 0.05);
+                const railMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.6, metalness: 0.2 });
+                const railFront = new THREE.Mesh(railGeo, railMat);
+                railFront.position.set(b.x || 0, 0.55, (b.y || 0) + (b.depth || 1.0) / 2 - 0.025);
+                threeScene.add(railFront);
+                const railBack = railFront.clone();
+                railBack.position.z = (b.y || 0) - (b.depth || 1.0) / 2 + 0.025;
+                threeScene.add(railBack);
+                const railSideGeo = new THREE.BoxGeometry(0.05, 0.9, (b.depth || 1.0) - 0.1);
+                const railLeft = new THREE.Mesh(railSideGeo, railMat);
+                railLeft.position.set((b.x || 0) - (b.width || 1.5) / 2 + 0.025, 0.55, b.y || 0);
+                threeScene.add(railLeft);
+                const railRight = railLeft.clone();
+                railRight.position.x = (b.x || 0) + (b.width || 1.5) / 2 - 0.025;
+                threeScene.add(railRight);
+            }
+
+            // Мебель
+            p.furniture.forEach(f => {
+                const w = f.width || 0.5;
+                const d = f.depth || 0.5;
+                const h = f.height || 0.8;
+                const fGeo = new THREE.BoxGeometry(w, h, d);
+                const fColor = f.color || '#888888';
+                const fMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(fColor), roughness: 0.6,
+                    metalness: 0.1 });
+                const fMesh = new THREE.Mesh(fGeo, fMat);
+                fMesh.position.set(f.x || 0, h / 2, f.y || 0);
+                fMesh.rotation.y = f.rotation || 0;
+                fMesh.castShadow = true;
+                fMesh.receiveShadow = true;
+                fMesh.userData = { type: 'furniture', id: f.id };
+                threeScene.add(fMesh);
+
+                if (f.furnitureType === 'chair' || f.furnitureType === 'armchair') {
+                    const backGeo = new THREE.BoxGeometry(w * 0.9, h * 0.5, 0.08);
+                    const backMesh = new THREE.Mesh(backGeo, fMat);
+                    backMesh.position.set(f.x || 0, h * 0.75, (f.y || 0) - d / 2 + 0.04);
+                    backMesh.rotation.y = f.rotation || 0;
+                    backMesh.castShadow = true;
+                    threeScene.add(backMesh);
+                }
+                if (f.furnitureType === 'table') {
+                    const legGeo = new THREE.BoxGeometry(0.08, h, 0.08);
+                    const legMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.7 });
+                    for (let i = 0; i < 4; i++) {
+                        const lx = (f.x || 0) + (i < 2 ? -w / 2 + 0.1 : w / 2 - 0.1);
+                        const lz = (f.y || 0) + (i % 2 === 0 ? -d / 2 + 0.1 : d / 2 - 0.1);
+                        const leg = new THREE.Mesh(legGeo, legMat);
+                        leg.position.set(lx, h / 2, lz);
+                        leg.castShadow = true;
+                        threeScene.add(leg);
+                    }
+                }
+                if (f.furnitureType === 'bathtub') {
+                    const innerGeo = new THREE.BoxGeometry(w * 0.7, h * 0.4, d * 0.7);
+                    const innerMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.3, metalness: 0.1 });
+                    const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+                    innerMesh.position.set(f.x || 0, h * 0.45, f.y || 0);
+                    innerMesh.rotation.y = f.rotation || 0;
+                    threeScene.add(innerMesh);
+                }
+            });
+
+            threeControls.target.set(0, ch / 2, 0);
+            threeControls.update();
+            render3D();
+        }
+
+        // ==================== 2D РЕНДЕРИНГ ====================
+        function getCanvasSize() {
+            return { width: canvasWrapper.clientWidth, height: canvasWrapper.clientHeight };
+        }
+
+        function resizeCanvas() {
+            const { width, height } = getCanvasSize();
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            render2D();
+        }
+
+        function worldToScreen(wx, wy) {
+            const cx = canvas.width / 2 + state.offsetX + wx * state.zoom * 50;
+            const cy = canvas.height / 2 + state.offsetY - wy * state.zoom * 50;
+            return { x: cx, y: cy };
+        }
+
+        function screenToWorld(sx, sy) {
+            // Исправлена ошибка знака offsetY
+            const wx = (sx - canvas.width / 2 - state.offsetX) / (state.zoom * 50);
+            const wy = (canvas.height / 2 + state.offsetY - sy) / (state.zoom * 50);
+            return { x: wx, y: wy };
+        }
+
+        function render2D() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const gridSize = 0.5;
+            const step = gridSize * state.zoom * 50;
+            const startWX = screenToWorld(0, 0).x;
+            const endWX = screenToWorld(canvas.width, 0).x;
+            const startWY = screenToWorld(0, canvas.height).y;
+            const endWY = screenToWorld(0, 0).y;
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 1;
+            for (let wx = Math.floor(startWX / gridSize) * gridSize; wx <= endWX; wx += gridSize) {
+                const s = worldToScreen(wx, 0);
+                ctx.beginPath();
+                ctx.moveTo(s.x, 0);
+                ctx.lineTo(s.x, canvas.height);
+                ctx.stroke();
+            }
+            for (let wy = Math.floor(startWY / gridSize) * gridSize; wy <= endWY; wy += gridSize) {
+                const s = worldToScreen(0, wy);
+                ctx.beginPath();
+                ctx.moveTo(0, s.y);
+                ctx.lineTo(canvas.width, s.y);
+                ctx.stroke();
+            }
+
+            // Балкон
+            if (state.project.balcony) {
+                const b = state.project.balcony;
+                const bw = b.width || 1.5;
+                const bd = b.depth || 1.0;
+                const bx = b.x || 0;
+                const by = b.y || 0;
+                const s1 = worldToScreen(bx - bw / 2, by - bd / 2);
+                const s2 = worldToScreen(bx + bw / 2, by + bd / 2);
+                ctx.fillStyle = 'rgba(100,180,100,0.2)';
+                ctx.strokeStyle = '#66aa66';
+                ctx.lineWidth = 2;
+                ctx.fillRect(s1.x, s1.y, s2.x - s1.x, s2.y - s1.y);
+                ctx.strokeRect(s1.x, s1.y, s2.x - s1.x, s2.y - s1.y);
+                ctx.fillStyle = '#66aa66';
+                ctx.font = '11px Segoe UI';
+                ctx.fillText('Балкон', s1.x + 5, s1.y + 15);
+            }
+
+            // Стены
+            const p = state.project;
+            p.walls.forEach(w => {
+                const p1 = p.points.find(pp => pp.id === w.point1);
+                const p2 = p.points.find(pp => pp.id === w.point2);
+                if (!p1 || !p2) return;
+                const s1 = worldToScreen(p1.x, p1.y);
+                const s2 = worldToScreen(p2.x, p2.y);
+                const thick = (w.thickness || state.wallThickness) * state.zoom * 50;
+                const isSelected = state.selectedWall && state.selectedWall.id === w.id;
+                ctx.strokeStyle = isSelected ? '#ffaa00' : (w.type === 'outer' ? '#555570' : '#666680');
+                ctx.lineWidth = thick;
+                ctx.lineCap = 'butt';
+                ctx.beginPath();
+                ctx.moveTo(s1.x, s1.y);
+                ctx.lineTo(s2.x, s2.y);
+                ctx.stroke();
+
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const midX = (p1.x + p2.x) / 2;
+                const midY = (p1.y + p2.y) / 2;
+                const sm = worldToScreen(midX, midY);
+                ctx.fillStyle = isSelected ? '#ffaa00' : '#aaa';
+                ctx.font = '10px Segoe UI';
+                ctx.fillText(len.toFixed(2) + 'м', sm.x + 5, sm.y - 5);
+
+                const ps1 = worldToScreen(p1.x, p1.y);
+                const ps2 = worldToScreen(p2.x, p2.y);
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(ps1.x, ps1.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(ps2.x, ps2.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Точки (для выделения)
+            if (state.mode === 'draw_wall' || state.selectedWall) {
+                p.points.forEach(pt => {
+                    const sp = worldToScreen(pt.x, pt.y);
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.arc(sp.x, sp.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            }
+
+            // Проёмы (окна, двери, арки)
+            p.openings.forEach(op => {
+                const wall = p.walls.find(w => w.id === op.wallId);
+                if (!wall) return;
+                const p1 = p.points.find(pp => pp.id === wall.point1);
+                const p2 = p.points.find(pp => pp.id === wall.point2);
+                if (!p1 || !p2) return;
+                const t = op.position || 0.5;
+                const opX = p1.x + (p2.x - p1.x) * t;
+                const opY = p1.y + (p2.y - p1.y) * t;
+                const sp = worldToScreen(opX, opY);
+                const isSel = state.selectedOpening && state.selectedOpening.id === op.id;
+                let color = '#88ccff';
+                let label = 'Окно';
+                if (op.type === 'door') { color = '#8B5A2B'; label = 'Дверь'; }
+                if (op.type === 'arch') { color = '#ccc'; label = 'Арка'; }
+                if (op.color) color = op.color;
+                ctx.fillStyle = isSel ? '#ffaa00' : color;
+                ctx.strokeStyle = isSel ? '#ffaa00' : '#fff';
+                ctx.lineWidth = isSel ? 2 : 1;
+                const opW = (op.width || 0.8) * state.zoom * 50;
+                const opH = 8;
+                ctx.fillRect(sp.x - opW / 2, sp.y - opH / 2, opW, opH);
+                ctx.strokeRect(sp.x - opW / 2, sp.y - opH / 2, opW, opH);
+                ctx.fillStyle = '#fff';
+                ctx.font = '9px Segoe UI';
+                ctx.fillText(label, sp.x - opW / 2 + 2, sp.y - 6);
+            });
+
+            // Мебель
+            p.furniture.forEach(f => {
+                const w = f.width || 0.5;
+                const d = f.depth || 0.5;
+                const rot = f.rotation || 0;
+                const cx = f.x || 0;
+                const cy = f.y || 0;
+                const isSel = state.selectedFurniture && state.selectedFurniture.id === f.id;
+                ctx.save();
+                const sc = worldToScreen(cx, cy);
+                ctx.translate(sc.x, sc.y);
+                ctx.rotate(-rot);
+                const sw = w * state.zoom * 50;
+                const sd = d * state.zoom * 50;
+                // Исправлено: выбранная мебель сохраняет свой цвет, но обводится оранжевым
+                ctx.fillStyle = f.color || '#888';
+                ctx.strokeStyle = isSel ? '#ffaa00' : '#fff';
+                ctx.lineWidth = isSel ? 3 : 1;
+                ctx.fillRect(-sw / 2, -sd / 2, sw, sd);
+                ctx.strokeRect(-sw / 2, -sd / 2, sw, sd);
+                const fd = furnitureData[f.category]?.find(fd => fd.type === f.furnitureType);
+                const fname = fd ? fd.name : f.furnitureType;
+                ctx.fillStyle = '#fff';
+                ctx.font = '9px Segoe UI';
+                ctx.fillText(fname, -sw / 2 + 3, -sd / 2 + 10);
+                ctx.restore();
+            });
+
+            // Точки для рисования стен
+            if (state.mode === 'draw_wall' && state.drawPoints.length > 0) {
+                state.drawPoints.forEach((pt, i) => {
+                    const sp = worldToScreen(pt.x, pt.y);
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px Segoe UI';
+                    ctx.fillText('' + (i + 1), sp.x + 8, sp.y - 8);
+                });
+                for (let i = 0; i < state.drawPoints.length - 1; i++) {
+                    const s1 = worldToScreen(state.drawPoints[i].x, state.drawPoints[i].y);
+                    const s2 = worldToScreen(state.drawPoints[i + 1].x, state.drawPoints[i + 1].y);
+                    ctx.strokeStyle = '#ffcc00';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(s1.x, s1.y);
+                    ctx.lineTo(s2.x, s2.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+
+            if (state.mode === 'draw_wall') {
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.font = '12px Segoe UI';
+                ctx.fillText('Клик — добавить точку, двойной клик — завершить', 10, 20);
+            }
+        }
+
+        // ==================== ОБРАБОТЧИКИ СОБЫТИЙ 2D ====================
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function findWallAt(pos) {
+            const wx = screenToWorld(pos.x, pos.y);
+            const threshold = 0.3 + (state.wallThickness / 2);
+            let best = null;
+            let bestDist = Infinity;
+            state.project.walls.forEach(w => {
+                const p1 = state.project.points.find(pp => pp.id === w.point1);
+                const p2 = state.project.points.find(pp => pp.id === w.point2);
+                if (!p1 || !p2) return;
+                const dist = distToSegment(wx.x, wx.y, p1.x, p1.y, p2.x, p2.y);
+                if (dist < threshold && dist < bestDist) {
+                    bestDist = dist;
+                    best = w;
+                }
+            });
+            return best;
+        }
+
+        function distToSegment(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+            let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+            const cx = x1 + t * dx;
+            const cy = y1 + t * dy;
+            return Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+        }
+
+        function findFurnitureAt(pos) {
+            const wx = screenToWorld(pos.x, pos.y);
+            for (let i = state.project.furniture.length - 1; i >= 0; i--) {
+                const f = state.project.furniture[i];
+                const w = f.width || 0.5;
+                const d = f.depth || 0.5;
+                const rot = f.rotation || 0;
+                const cx = f.x || 0;
+                const cy = f.y || 0;
+                const cos = Math.cos(-rot);
+                const sin = Math.sin(-rot);
+                const dx = wx.x - cx;
+                const dy = wx.y - cy;
+                const lx = dx * cos - dy * sin;
+                const ly = dx * sin + dy * cos;
+                if (Math.abs(lx) <= w / 2 && Math.abs(ly) <= d / 2) {
+                    return f;
+                }
+            }
+            return null;
+        }
+
+        function findOpeningAt(pos) {
+            const wx = screenToWorld(pos.x, pos.y);
+            const threshold = 0.4;
+            for (let i = state.project.openings.length - 1; i >= 0; i--) {
+                const op = state.project.openings[i];
+                const wall = state.project.walls.find(w => w.id === op.wallId);
+                if (!wall) continue;
+                const p1 = state.project.points.find(pp => pp.id === wall.point1);
+                const p2 = state.project.points.find(pp => pp.id === wall.point2);
+                if (!p1 || !p2) continue;
+                const t = op.position || 0.5;
+                const opX = p1.x + (p2.x - p1.x) * t;
+                const opY = p1.y + (p2.y - p1.y) * t;
+                if (Math.abs(wx.x - opX) < threshold && Math.abs(wx.y - opY) < threshold) {
+                    return op;
+                }
+            }
+            return null;
+        }
+
+        function findBalconyAt(pos) {
+            const wx = screenToWorld(pos.x, pos.y);
+            const b = state.project.balcony;
+            if (!b) return null;
+            const bw = b.width || 1.5;
+            const bd = b.depth || 1.0;
+            const bx = b.x || 0;
+            const by = b.y || 0;
+            if (Math.abs(wx.x - bx) <= bw / 2 && Math.abs(wx.y - by) <= bd / 2) {
+                return b;
+            }
+            return null;
+        }
+
+        function findPointAt(pos) {
+            const wx = screenToWorld(pos.x, pos.y);
+            const threshold = 0.4;
+            let best = null;
+            let bestDist = Infinity;
+            state.project.points.forEach(pt => {
+                const dist = Math.sqrt((wx.x - pt.x) ** 2 + (wx.y - pt.y) ** 2);
+                if (dist < threshold && dist < bestDist) {
+                    bestDist = dist;
+                    best = pt;
+                }
+            });
+            return best;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (state.view3d) return;
+            const pos = getCanvasPos(e);
+            if (e.button === 1 || (e.button === 0 && e.altKey)) {
+                state.panning = true;
+                state.panStartX = e.clientX;
+                state.panStartY = e.clientY;
+                return;
+            }
+            if (e.button !== 0) return;
+
+            const mode = state.mode;
+
+            if (mode === 'draw_wall') {
+                const wx = screenToWorld(pos.x, pos.y);
+                state.drawPoints.push({ x: wx.x, y: wx.y });
+                render2D();
+                statusText.textContent = `Рисование стен: точка ${state.drawPoints.length} добавлена. Двойной клик — завершить.`;
+                return;
+            }
+
+            if (mode === 'add_window' || mode === 'add_door' || mode === 'add_arch') {
+                const wall = findWallAt(pos);
+                if (wall) {
+                    const p1 = state.project.points.find(pp => pp.id === wall.point1);
+                    const p2 = state.project.points.find(pp => pp.id === wall.point2);
+                    const wx = screenToWorld(pos.x, pos.y);
+                    const dist = distToSegment(wx.x, wx.y, p1.x, p1.y, p2.x, p2.y);
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    let t = ((wx.x - p1.x) * dx + (wx.y - p1.y) * dy) / (len * len);
+                    t = Math.max(0.1, Math.min(0.9, t));
+                    const opening = {
+                        id: state.nextId++,
+                        wallId: wall.id,
+                        position: t,
+                        width: mode === 'add_window' ? 1.5 : mode === 'add_door' ? 0.9 : 1.2,
+                        height: mode === 'add_window' ? 1.5 : 2.1,
+                        type: mode === 'add_window' ? 'window' : mode === 'add_door' ? 'door' : 'arch',
+                        doorType: mode === 'add_door' ? 'swing' : 'none',
+                        color: mode === 'add_window' ? '#88ccff' : mode === 'add_door' ? '#8B5A2B' : '#cccccc',
+                    };
+                    state.project.openings.push(opening);
+                    state.selectedOpening = opening;
+                    state.selectedObject = opening;
+                    state.selectedWall = null;
+                    state.selectedFurniture = null;
+                    state.selectedBalcony = null;
+                    updatePropertiesPanel();
+                    render2D();
+                    if (state.view3d) build3DScene();
+                    statusText.textContent = 'Объект добавлен. Настройте свойства справа.';
+                } else {
+                    statusText.textContent = 'Кликните по стене для размещения объекта!';
+                }
+                return;
+            }
+
+            if (mode === 'add_balcony') {
+                const wx = screenToWorld(pos.x, pos.y);
+                if (!state.project.balcony) {
+                    state.project.balcony = {
+                        id: state.nextId++,
+                        x: wx.x,
+                        y: wx.y,
+                        width: 2.0,
+                        depth: 1.2,
+                        color: '#99bb99',
+                    };
+                } else {
+                    state.project.balcony.x = wx.x;
+                    state.project.balcony.y = wx.y;
+                }
+                state.selectedBalcony = state.project.balcony;
+                state.selectedObject = state.project.balcony;
+                state.selectedWall = null;
+                state.selectedFurniture = null;
+                state.selectedOpening = null;
+                updatePropertiesPanel();
+                render2D();
+                if (state.view3d) build3DScene();
+                statusText.textContent = 'Балкон размещён. Перетаскивайте или меняйте размеры справа.';
+                return;
+            }
+
+            if (mode === 'add_furniture') {
+                const wx = screenToWorld(pos.x, pos.y);
+                const fd = furnitureData[state.furnitureCategory].find(f => f.type === state.furnitureType);
+                if (!fd) return;
+                const furn = {
+                    id: state.nextId++,
+                    category: state.furnitureCategory,
+                    furnitureType: fd.type,
+                    name: fd.name,
+                    x: wx.x,
+                    y: wx.y,
+                    width: fd.defaultW,
+                    depth: fd.defaultD,
+                    height: fd.defaultH,
+                    rotation: 0,
+                    color: fd.color,
+                };
+                state.project.furniture.push(furn);
+                state.selectedFurniture = furn;
+                state.selectedObject = furn;
+                state.selectedWall = null;
+                state.selectedOpening = null;
+                state.selectedBalcony = null;
+                updatePropertiesPanel();
+                render2D();
+                if (state.view3d) build3DScene();
+                statusText.textContent = `${fd.name} добавлен(а). Перетаскивайте для перемещения.`;
+                return;
+            }
+
+            // Mode select
+            if (mode === 'select') {
+                const furn = findFurnitureAt(pos);
+                if (furn) {
+                    state.selectedFurniture = furn;
+                    state.selectedObject = furn;
+                    state.selectedWall = null;
+                    state.selectedOpening = null;
+                    state.selectedBalcony = null;
+                    state.dragObject = furn;
+                    const wx = screenToWorld(pos.x, pos.y);
+                    state.dragOffsetX = wx.x - (furn.x || 0);
+                    state.dragOffsetY = wx.y - (furn.y || 0);
+                    updatePropertiesPanel();
+                    render2D();
+                    return;
+                }
+                const op = findOpeningAt(pos);
+                if (op) {
+                    state.selectedOpening = op;
+                    state.selectedObject = op;
+                    state.selectedWall = null;
+                    state.selectedFurniture = null;
+                    state.selectedBalcony = null;
+                    updatePropertiesPanel();
+                    render2D();
+                    return;
+                }
+                const wall = findWallAt(pos);
+                if (wall) {
+                    state.selectedWall = wall;
+                    state.selectedObject = wall;
+                    state.selectedFurniture = null;
+                    state.selectedOpening = null;
+                    state.selectedBalcony = null;
+                    updatePropertiesPanel();
+                    render2D();
+                    return;
+                }
+                const balcony = findBalconyAt(pos);
+                if (balcony) {
+                    state.selectedBalcony = balcony;
+                    state.selectedObject = balcony;
+                    state.selectedWall = null;
+                    state.selectedFurniture = null;
+                    state.selectedOpening = null;
+                    state.dragObject = balcony;
+                    const wx = screenToWorld(pos.x, pos.y);
+                    state.dragOffsetX = wx.x - (balcony.x || 0);
+                    state.dragOffsetY = wx.y - (balcony.y || 0);
+                    updatePropertiesPanel();
+                    render2D();
+                    return;
+                }
+                const pt = findPointAt(pos);
+                if (pt) {
+                    state.dragObject = pt;
+                    state.dragOffsetX = 0;
+                    state.dragOffsetY = 0;
+                    updatePropertiesPanel();
+                    render2D();
+                    return;
+                }
+                state.selectedObject = null;
+                state.selectedWall = null;
+                state.selectedFurniture = null;
+                state.selectedOpening = null;
+                state.selectedBalcony = null;
+                updatePropertiesPanel();
+                render2D();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (state.view3d) return;
+            const pos = getCanvasPos(e);
+            if (state.panning) {
+                state.offsetX += e.clientX - state.panStartX;
+                state.offsetY += e.clientY - state.panStartY;
+                state.panStartX = e.clientX;
+                state.panStartY = e.clientY;
+                render2D();
+                return;
+            }
+            if (state.dragObject && state.mode === 'select') {
+                const wx = screenToWorld(pos.x, pos.y);
+                if (state.dragObject.category) {
+                    state.dragObject.x = wx.x - state.dragOffsetX;
+                    state.dragObject.y = wx.y - state.dragOffsetY;
+                } else if (state.dragObject.width !== undefined && state.dragObject.depth !== undefined && !state.dragObject.point1) {
+                    state.dragObject.x = wx.x - state.dragOffsetX;
+                    state.dragObject.y = wx.y - state.dragOffsetY;
+                } else if (state.dragObject.x !== undefined && state.dragObject.y !== undefined && !state.dragObject.point1 && !state.dragObject.category) {
+                    state.dragObject.x = wx.x;
+                    state.dragObject.y = wx.y;
+                }
+                render2D();
+                if (state.view3d) build3DScene();
+                return;
+            }
+            if (state.mode === 'select') {
+                const furn = findFurnitureAt(pos);
+                const wall = findWallAt(pos);
+                const op = findOpeningAt(pos);
+                const balcony = findBalconyAt(pos);
+                canvas.style.cursor = (furn || wall || op || balcony) ? 'pointer' : 'crosshair';
+            } else if (state.mode === 'add_window' || state.mode === 'add_door' || state.mode === 'add_arch') {
+                const wall = findWallAt(pos);
+                canvas.style.cursor = wall ? 'copy' : 'not-allowed';
+            } else {
+                canvas.style.cursor = 'crosshair';
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (state.panning) {
+                state.panning = false;
+                return;
+            }
+            if (state.dragObject) {
+                state.dragObject = null;
+                render2D();
+                if (state.view3d) build3DScene();
+            }
+        });
+
+        canvas.addEventListener('dblclick', (e) => {
+            if (state.view3d) return;
+            if (state.mode === 'draw_wall' && state.drawPoints.length >= 2) {
+                finishWallDrawing();
+                statusText.textContent = 'Стены созданы. Выберите другой режим.';
+            }
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            if (state.view3d) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            state.zoom = Math.max(0.1, Math.min(5, state.zoom * delta));
+            zoomStatus.textContent = `Масштаб: ${Math.round(state.zoom * 100)}%`;
+            render2D();
+        }, { passive: false });
+
+        function finishWallDrawing() {
+            if (state.drawPoints.length < 2) {
+                state.drawPoints = [];
+                render2D();
+                return;
+            }
+            const pts = state.drawPoints;
+            const pointIds = [];
+            pts.forEach(p => {
+                const newPt = { id: state.nextId++, x: p.x, y: p.y };
+                state.project.points.push(newPt);
+                pointIds.push(newPt.id);
+            });
+            for (let i = 0; i < pointIds.length - 1; i++) {
+                state.project.walls.push({
+                    id: state.nextId++,
+                    point1: pointIds[i],
+                    point2: pointIds[i + 1],
+                    thickness: state.wallThickness,
+                    type: state.wallType,
+                    color: state.wallType === 'outer' ? '#555570' : '#666680',
+                });
+            }
+            const first = pts[0];
+            const last = pts[pts.length - 1];
+            const dist = Math.sqrt((first.x - last.x) ** 2 + (first.y - last.y) ** 2);
+            if (dist < 0.5 && pts.length > 2) {
+                state.project.walls.push({
+                    id: state.nextId++,
+                    point1: pointIds[pointIds.length - 1],
+                    point2: pointIds[0],
+                    thickness: state.wallThickness,
+                    type: state.wallType,
+                    color: state.wallType === 'outer' ? '#555570' : '#666680',
+                });
+            }
+            state.drawPoints = [];
+            state.mode = 'select';
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === 'select');
+            });
+            render2D();
+            if (state.view3d) build3DScene();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                state.mode = 'select';
+                state.drawPoints = [];
+                state.dragObject = null;
+                document.querySelectorAll('.tool-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === 'select');
+                });
+                render2D();
+                statusText.textContent = 'Режим: Выбор';
+            }
+            if (e.key === 'Enter' && state.mode === 'draw_wall') {
+                finishWallDrawing();
+            }
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (state.selectedObject) {
+                    deleteSelectedObject();
+                }
+            }
+            if (e.key === 'r' || e.key === 'R') {
+                if (state.selectedFurniture) {
+                    state.selectedFurniture.rotation = (state.selectedFurniture.rotation || 0) + Math.PI / 2;
+                    render2D();
+                    if (state.view3d) build3DScene();
+                }
+            }
+        });
+
+        function deleteSelectedObject() {
+            const sel = state.selectedObject;
+            if (!sel) return;
+            if (sel.category) {
+                state.project.furniture = state.project.furniture.filter(f => f.id !== sel.id);
+                state.selectedFurniture = null;
+            } else if (sel.width !== undefined && sel.depth !== undefined && !sel.point1 && !sel.wallId) {
+                state.project.balcony = null;
+                state.selectedBalcony = null;
+            } else if (sel.wallId !== undefined) {
+                state.project.openings = state.project.openings.filter(op => op.id !== sel.id);
+                state.selectedOpening = null;
+            } else if (sel.point1 !== undefined) {
+                state.project.walls = state.project.walls.filter(w => w.id !== sel.id);
+                state.selectedWall = null;
+            } else if (sel.x !== undefined && sel.y !== undefined && !sel.point1 && !sel.category) {
+                const ptId = sel.id;
+                state.project.points = state.project.points.filter(p => p.id !== ptId);
+                state.project.walls = state.project.walls.filter(w => w.point1 !== ptId && w.point2 !== ptId);
+                state.project.openings = state.project.openings.filter(op => {
+                    const wall = state.project.walls.find(w => w.id === op.wallId);
+                    return wall;
+                });
+            }
+            state.selectedObject = null;
+            updatePropertiesPanel();
+            render2D();
+            if (state.view3d) build3DScene();
+            statusText.textContent = 'Объект удалён';
+        }
+
+        // ==================== ПАНЕЛЬ СВОЙСТВ ====================
+        function updatePropertiesPanel() {
+            const sel = state.selectedObject;
+            if (!sel) {
+                propertiesContent.innerHTML = '<p style="font-size:12px;color:var(--text2);">Выберите объект для редактирования</p>';
+                return;
+            }
+
+            let html = '';
+
+            if (sel.category) {
+                const fd = furnitureData[sel.category]?.find(f => f.type === sel.furnitureType);
+                html = `
+                    <div class="prop-row"><label>Тип:</label><span style="color:var(--accent);">${fd?.name || sel.furnitureType}</span></div>
+                    <div class="prop-row"><label>Ширина (м):</label><input type="number" id="propWidth" value="${sel.width}" step="0.05" min="0.2"></div>
+                    <div class="prop-row"><label>Глубина (м):</label><input type="number" id="propDepth" value="${sel.depth}" step="0.05" min="0.2"></div>
+                    <div class="prop-row"><label>Высота (м):</label><input type="number" id="propHeight" value="${sel.height}" step="0.05" min="0.1"></div>
+                    <div class="prop-row"><label>X (м):</label><input type="number" id="propX" value="${sel.x.toFixed(2)}" step="0.1"></div>
+                    <div class="prop-row"><label>Y (м):</label><input type="number" id="propY" value="${sel.y.toFixed(2)}" step="0.1"></div>
+                    <div class="prop-row"><label>Поворот:</label><input type="number" id="propRotation" value="${((sel.rotation||0)*180/Math.PI).toFixed(0)}" step="15"></div>
+                    <div class="prop-row"><label>Цвет:</label><input type="color" id="propColor" value="${sel.color}"></div>
+                    <button id="btnDeleteSelected" style="width:100%;background:#aa3333;border:none;color:#fff;padding:8px;border-radius:4px;cursor:pointer;margin-top:8px;">Удалить объект</button>
+                `;
+            } else if (sel.point1 !== undefined) {
+                const p1 = state.project.points.find(pp => pp.id === sel.point1);
+                const p2 = state.project.points.find(pp => pp.id === sel.point2);
+                const dx = p2 ? p2.x - p1.x : 0;
+                const dy = p2 ? p2.y - p1.y : 0;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                html = `
+                    <div class="prop-row"><label>Тип:</label><span style="color:var(--accent);">${sel.type === 'outer' ? 'Внешняя' : 'Внутренняя'}</span></div>
+                    <div class="prop-row"><label>Длина:</label><span>${len.toFixed(2)} м</span></div>
+                    <div class="prop-row"><label>Толщина:</label><input type="number" id="propThickness" value="${sel.thickness}" step="0.05" min="0.1"></div>
+                    <div class="prop-row"><label>Тип:</label><select id="propType"><option value="outer" ${sel.type==='outer'?'selected':''}>Внешняя</option><option value="inner" ${sel.type==='inner'?'selected':''}>Внутренняя</option></select></div>
+                    <button id="btnDeleteSelected" style="width:100%;background:#aa3333;border:none;color:#fff;padding:8px;border-radius:4px;cursor:pointer;margin-top:8px;">Удалить стену</button>
+                `;
+            } else if (sel.wallId !== undefined) {
+                const opNames = { window: 'Окно', door: 'Дверь', arch: 'Арка' };
+                html = `
+                    <div class="prop-row"><label>Тип:</label><span style="color:var(--accent);">${opNames[sel.type]||sel.type}</span></div>
+                    <div class="prop-row"><label>Ширина (м):</label><input type="number" id="propWidth" value="${sel.width}" step="0.05" min="0.3"></div>
+                    <div class="prop-row"><label>Высота (м):</label><input type="number" id="propHeight" value="${sel.height}" step="0.05" min="0.5"></div>
+                    <div class="prop-row"><label>Позиция:</label><input type="number" id="propPosition" value="${(sel.position||0.5).toFixed(2)}" step="0.05" min="0.05" max="0.95"></div>
+                    ${sel.type === 'door' ? `<div class="prop-row"><label>Тип двери:</label><select id="propDoorType"><option value="swing" ${sel.doorType==='swing'?'selected':''}>Распашная</option><option value="sliding" ${sel.doorType==='sliding'?'selected':''}>Сдвижная</option></select></div>` : ''}
+                    <div class="prop-row"><label>Цвет:</label><input type="color" id="propColor" value="${sel.color}"></div>
+                    <button id="btnDeleteSelected" style="width:100%;background:#aa3333;border:none;color:#fff;padding:8px;border-radius:4px;cursor:pointer;margin-top:8px;">Удалить</button>
+                `;
+            } else if (sel.width !== undefined && sel.depth !== undefined && !sel.point1) {
+                html = `
+                    <div class="prop-row"><label>Ширина (м):</label><input type="number" id="propWidth" value="${sel.width}" step="0.1" min="0.5"></div>
+                    <div class="prop-row"><label>Глубина (м):</label><input type="number" id="propDepth" value="${sel.depth}" step="0.1" min="0.5"></div>
+                    <div class="prop-row"><label>X (м):</label><input type="number" id="propX" value="${sel.x.toFixed(2)}" step="0.1"></div>
+                    <div class="prop-row"><label>Y (м):</label><input type="number" id="propY" value="${sel.y.toFixed(2)}" step="0.1"></div>
+                    <div class="prop-row"><label>Цвет:</label><input type="color" id="propColor" value="${sel.color}"></div>
+                    <button id="btnDeleteSelected" style="width:100%;background:#aa3333;border:none;color:#fff;padding:8px;border-radius:4px;cursor:pointer;margin-top:8px;">Удалить балкон</button>
+                `;
+            } else if (sel.x !== undefined && sel.y !== undefined && !sel.point1 && !sel.category) {
+                html = `
+                    <div class="prop-row"><label>X (м):</label><input type="number" id="propX" value="${sel.x.toFixed(2)}" step="0.05"></div>
+                    <div class="prop-row"><label>Y (м):</label><input type="number" id="propY" value="${sel.y.toFixed(2)}" step="0.05"></div>
+                    <button id="btnDeleteSelected" style="width:100%;background:#aa3333;border:none;color:#fff;padding:8px;border-radius:4px;cursor:pointer;margin-top:8px;">Удалить точку</button>
+                `;
+            }
+
+            propertiesContent.innerHTML = html;
+
+            const bindInput = (id, callback) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => callback(el));
+            };
+
+            bindInput('propWidth', (el) => { sel.width = parseFloat(el.value) || 0.5; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propDepth', (el) => { sel.depth = parseFloat(el.value) || 0.5; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propHeight', (el) => { sel.height = parseFloat(el.value) || 0.8; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propX', (el) => { sel.x = parseFloat(el.value) || 0; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propY', (el) => { sel.y = parseFloat(el.value) || 0; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propRotation', (el) => { sel.rotation = (parseFloat(el.value) || 0) * Math.PI / 180; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propColor', (el) => { sel.color = el.value; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propThickness', (el) => { sel.thickness = parseFloat(el.value) || 0.3; render2D(); if (state.view3d) build3DScene(); });
+            bindInput('propPosition', (el) => { sel.position = Math.max(0.05, Math.min(0.95, parseFloat(el.value) || 0.5)); render2D(); if (state.view3d) build3DScene(); });
+
+            const typeSelect = document.getElementById('propType');
+            if (typeSelect) typeSelect.addEventListener('change', () => { sel.type = typeSelect.value; render2D(); if (state.view3d) build3DScene(); });
+
+            const doorTypeSelect = document.getElementById('propDoorType');
+            if (doorTypeSelect) doorTypeSelect.addEventListener('change', () => { sel.doorType = doorTypeSelect.value; render2D(); });
+
+            const btnDelete = document.getElementById('btnDeleteSelected');
+            if (btnDelete) btnDelete.addEventListener('click', () => deleteSelectedObject());
+        }
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ МЕБЕЛЬНОЙ СЕТКИ ====================
+        function populateFurnitureGrid() {
+            const cat = state.furnitureCategory;
+            const items = furnitureData[cat] || [];
+            furnitureGrid.innerHTML = '';
+            items.forEach(fd => {
+                const btn = document.createElement('button');
+                btn.className = 'furniture-btn' + (state.furnitureType === fd.type ? ' active' : '');
+                btn.textContent = fd.name;
+                btn.dataset.furnitureType = fd.type;
+                btn.addEventListener('click', () => {
+                    state.furnitureType = fd.type;
+                    state.mode = 'add_furniture';
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === 'add_furniture'));
+                    document.querySelectorAll('.furniture-btn').forEach(b => b.classList.toggle('active', b.dataset.furnitureType === fd.type));
+                    statusText.textContent = `Кликните по плану для размещения: ${fd.name}`;
+                    render2D();
+                });
+                furnitureGrid.appendChild(btn);
+            });
+        }
+
+        furnitureCategorySelect.addEventListener('change', () => {
+            state.furnitureCategory = furnitureCategorySelect.value;
+            state.furnitureType = furnitureData[state.furnitureCategory]?.[0]?.type || 'table';
+            populateFurnitureGrid();
+        });
+        populateFurnitureGrid();
+
+        // ==================== ОБРАБОТЧИКИ ИНСТРУМЕНТОВ ====================
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.mode = btn.dataset.mode;
+                state.drawPoints = [];
+                state.dragObject = null;
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b === btn));
+                if (state.mode === 'draw_wall') {
+                    statusText.textContent = 'Режим: Рисование стен. Кликайте для добавления точек, двойной клик — завершить.';
+                } else if (state.mode === 'add_window') {
+                    statusText.textContent = 'Режим: Добавление окна. Кликните по стене.';
+                } else if (state.mode === 'add_door') {
+                    statusText.textContent = 'Режим: Добавление двери. Кликните по стене.';
+                } else if (state.mode === 'add_arch') {
+                    statusText.textContent = 'Режим: Добавление арки. Кликните по стене.';
+                } else if (state.mode === 'add_balcony') {
+                    statusText.textContent = 'Режим: Добавление балкона. Кликните для размещения.';
+                } else if (state.mode === 'add_furniture') {
+                    statusText.textContent = 'Режим: Добавление мебели. Кликните по плану.';
+                } else {
+                    statusText.textContent = 'Режим: Выбор — клик по объекту для выбора, перетаскивание для перемещения';
+                }
+                render2D();
+            });
+        });
+
+        document.querySelectorAll('.wall-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.wallType = btn.dataset.wallType;
+                document.querySelectorAll('.wall-type-btn').forEach(b => b.classList.toggle('active', b === btn));
+                state.wallThickness = state.wallType === 'outer' ? 0.4 : 0.2;
+                wallThicknessInput.value = state.wallThickness;
+                render2D();
+            });
+        });
+
+        wallThicknessInput.addEventListener('input', () => {
+            state.wallThickness = parseFloat(wallThicknessInput.value) || 0.3;
+        });
+
+        ceilingHeightInput.addEventListener('input', () => {
+            state.ceilingHeight = parseFloat(ceilingHeightInput.value) || 2.7;
+            state.project.ceilingHeight = state.ceilingHeight;
+            if (state.view3d) build3DScene();
+        });
+
+        projectNameInput.addEventListener('input', () => {
+            state.project.name = projectNameInput.value || 'Проект';
+        });
+
+        // ==================== ПЕРЕКЛЮЧЕНИЕ 2D/3D ====================
+        btn2D.addEventListener('click', () => {
+            state.view3d = false;
+            btn2D.classList.add('active');
+            btn3D.classList.remove('active');
+            canvas.style.display = 'block';
+            canvas3dContainer.style.display = 'none';
+            render2D();
+        });
+
+        btn3D.addEventListener('click', () => {
+            state.view3d = true;
+            btn3D.classList.add('active');
+            btn2D.classList.remove('active');
+            canvas.style.display = 'none';
+            canvas3dContainer.style.display = 'block';
+            initThree();
+            const w = canvas3dContainer.clientWidth;
+            const h = canvas3dContainer.clientHeight;
+            threeCamera.aspect = w / h;
+            threeCamera.updateProjectionMatrix();
+            threeRenderer.setSize(w, h);
+            build3DScene();
+        });
+
+        // ==================== СОХРАНЕНИЕ / ЗАГРУЗКА ====================
+        function getProjectJSON() {
+            return JSON.stringify({
+                name: state.project.name,
+                ceilingHeight: state.project.ceilingHeight,
+                walls: state.project.walls,
+                points: state.project.points,
+                openings: state.project.openings,
+                balcony: state.project.balcony,
+                furniture: state.project.furniture,
+                nextId: state.nextId,
+            }, null, 2);
+        }
+
+        function loadProjectJSON(data) {
+            const obj = JSON.parse(data);
+            state.project.name = obj.name || 'Проект';
+            state.project.ceilingHeight = obj.ceilingHeight || 2.7;
+            state.project.walls = obj.walls || [];
+            state.project.points = obj.points || [];
+            state.project.openings = obj.openings || [];
+            state.project.balcony = obj.balcony || null;
+            state.project.furniture = obj.furniture || [];
+            state.nextId = obj.nextId || 100;
+            state.ceilingHeight = state.project.ceilingHeight;
+            ceilingHeightInput.value = state.ceilingHeight;
+            projectNameInput.value = state.project.name;
+            state.selectedObject = null;
+            state.selectedWall = null;
+            state.selectedFurniture = null;
+            state.selectedOpening = null;
+            state.selectedBalcony = null;
+            updatePropertiesPanel();
+            render2D();
+            if (state.view3d) build3DScene();
+        }
+
+        document.getElementById('btnSave').addEventListener('click', () => {
+            const json = getProjectJSON();
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (state.project.name || 'project') + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            statusText.textContent = 'Проект сохранён';
+        });
+
+        document.getElementById('btnLoad').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        loadProjectJSON(ev.target.result);
+                        statusText.textContent = 'Проект загружен';
+                    } catch (err) {
+                        alert('Ошибка загрузки: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+
+        document.getElementById('btnExportJSON').addEventListener('click', () => {
+            const json = getProjectJSON();
+            navigator.clipboard.writeText(json).then(() => {
+                statusText.textContent = 'JSON скопирован в буфер обмена';
+            }).catch(() => {
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = (state.project.name || 'project') + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
+
+        document.getElementById('btnImportJSON').addEventListener('click', () => {
+            modalTitle.textContent = 'Импорт проекта из JSON';
+            modalBody.innerHTML = '<textarea id="jsonInput" style="width:100%;height:200px;background:var(--btn);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:4px;font-family:monospace;font-size:12px;"></textarea>';
+            modalOverlay.classList.add('show');
+            modalOk.onclick = () => {
+                const json = document.getElementById('jsonInput').value;
+                if (json) {
+                    try {
+                        loadProjectJSON(json);
+                        modalOverlay.classList.remove('show');
+                        statusText.textContent = 'Проект импортирован';
+                    } catch (err) {
+                        alert('Ошибка: ' + err.message);
+                    }
+                }
+            };
+            modalCancel.onclick = () => { modalOverlay.classList.remove('show'); };
+        });
+
+        document.getElementById('btnClear').addEventListener('click', () => {
+            if (confirm('Удалить все элементы проекта?')) {
+                state.project.walls = [];
+                state.project.points = [];
+                state.project.openings = [];
+                state.project.balcony = null;
+                state.project.furniture = [];
+                state.selectedObject = null;
+                state.selectedWall = null;
+                state.selectedFurniture = null;
+                state.selectedOpening = null;
+                state.selectedBalcony = null;
+                state.drawPoints = [];
+                updatePropertiesPanel();
+                render2D();
+                if (state.view3d) build3DScene();
+                statusText.textContent = 'Проект очищен';
+            }
+        });
+
+        // ==================== ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА ====================
+        modalCancel.addEventListener('click', () => {
+            modalOverlay.classList.remove('show');
+        });
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) modalOverlay.classList.remove('show');
+        });
+
+        // ==================== РЕСАЙЗ ====================
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (state.view3d && threeInitialized) {
+                const w = canvas3dContainer.clientWidth;
+                const h = canvas3dContainer.clientHeight;
+                threeCamera.aspect = w / h;
+                threeCamera.updateProjectionMatrix();
+                threeRenderer.setSize(w, h);
+            }
+        });
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        function init() {
+            resizeCanvas();
+            state.project.ceilingHeight = state.ceilingHeight;
+            updatePropertiesPanel();
+            statusText.textContent = 'Режим: Выбор — клик по объекту для выбора, перетаскивание для перемещения';
+            zoomStatus.textContent = 'Масштаб: 100%';
+            render2D();
+        }
+
+        init();
+
+        // Добавляем демонстрационную мебель для примера
+        setTimeout(() => {
+            if (state.project.furniture.length === 0) {
+                const demoFurniture = [
+                    { category: 'kitchen', furnitureType: 'table', x: 3, y: 2, width: 1.2, depth: 0.8, height: 0.75, rotation: 0, color: '#8B5A2B' },
+                    { category: 'kitchen', furnitureType: 'chair', x: 2.5, y: 1.8, width: 0.45, depth: 0.45, height: 0.9, rotation: 0, color: '#8B5A2B' },
+                    { category: 'kitchen', furnitureType: 'fridge', x: 0.5, y: 0.5, width: 0.7, depth: 0.7, height: 1.8, rotation: 0, color: '#C0C0C0' },
+                    { category: 'living', furnitureType: 'sofa', x: -1, y: 2.5, width: 2.0, depth: 0.9, height: 0.8, rotation: 0, color: '#4A6FA5' },
+                    { category: 'bathroom', furnitureType: 'toilet', x: -3, y: -1, width: 0.4, depth: 0.7, height: 0.8, rotation: 0, color: '#FFFFFF' },
+                ];
+                demoFurniture.forEach(f => {
+                    f.id = state.nextId++;
+                    state.project.furniture.push(f);
+                });
+                const wallPoints = [
+                    { x: -4, y: -3 }, { x: 4, y: -3 }, { x: 4, y: 3 }, { x: -4, y: 3 },
+                ];
+                const pointIds = [];
+                wallPoints.forEach(p => {
+                    const newPt = { id: state.nextId++, x: p.x, y: p.y };
+                    state.project.points.push(newPt);
+                    pointIds.push(newPt.id);
+                });
+                for (let i = 0; i < pointIds.length; i++) {
+                    state.project.walls.push({
+                        id: state.nextId++,
+                        point1: pointIds[i],
+                        point2: pointIds[(i + 1) % pointIds.length],
+                        thickness: 0.4,
+                        type: 'outer',
+                        color: '#555570',
+                    });
+                }
+                const innerP1 = { id: state.nextId++, x: 0, y: -3 };
+                const innerP2 = { id: state.nextId++, x: 0, y: 3 };
+                state.project.points.push(innerP1, innerP2);
+                state.project.walls.push({
+                    id: state.nextId++,
+                    point1: innerP1.id,
+                    point2: innerP2.id,
+                    thickness: 0.2,
+                    type: 'inner',
+                    color: '#666680',
+                });
+                state.project.openings.push({
+                    id: state.nextId++,
+                    wallId: state.project.walls[0].id,
+                    position: 0.5,
+                    width: 1.5,
+                    height: 1.5,
+                    type: 'window',
+                    doorType: 'none',
+                    color: '#88ccff',
+                });
+                state.project.openings.push({
+                    id: state.nextId++,
+                    wallId: state.project.walls[3].id,
+                    position: 0.5,
+                    width: 0.9,
+                    height: 2.1,
+                    type: 'door',
+                    doorType: 'swing',
+                    color: '#8B5A2B',
+                });
+                state.project.balcony = {
+                    id: state.nextId++,
+                    x: 4,
+                    y: 0,
+                    width: 3,
+                    depth: 1.5,
+                    color: '#99bb99',
+                };
+                updatePropertiesPanel();
+                render2D();
+                if (state.view3d) build3DScene();
+                statusText.textContent = 'Демонстрационный проект загружен. Экспериментируйте!';
+            }
+        }, 100);
+
+        console.log('ASP Studio — приложение готово');
+        console.log('Подсказки: R — повернуть мебель, Delete — удалить, Esc — режим выбора');
+    </script>
+</body>
+</html>

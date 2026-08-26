@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASP Studio — Планировщик квартиры</title>
+<style>
+:root{--bg:#efe4d2;--panel:#f8f1e6;--panel2:#fffaf2;--text:#40382f;--muted:#7d7062;--accent:#a77b4f;--accent2:#c39a6a;--danger:#b85c52;--line:#d8c8b4;--grid:#d9cbb9}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}button{cursor:pointer;border:0}.app{height:100vh;display:grid;grid-template-rows:54px 1fr;grid-template-columns:330px 1fr 300px}
+header{grid-column:1/-1;background:#e3d2bb;border-bottom:1px solid #cdb99f;display:flex;align-items:center;padding:0 14px;gap:14px}.brand{font-weight:800;letter-spacing:.3px;font-size:18px}.brand span{color:var(--accent2)}.project-name{background:#fffaf2;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:8px;min-width:240px;outline:none}.header-actions{display:flex;gap:8px;margin-left:auto}
+.btn{background:#eee1cf;color:var(--text);padding:8px 11px;border-radius:8px;border:1px solid #cdbca5;font-size:13px}.btn:hover{background:#e5d5c0}.btn.primary{background:var(--accent);border-color:var(--accent)}.btn.primary:hover{background:#b58b61}.btn.danger{background:#f1d8d3;border-color:#d9aaa2}.btn.small{padding:5px 8px;font-size:12px}
+aside{background:var(--panel);border-right:1px solid #d6c6b2;overflow:auto;padding:12px}.right{border-right:0;border-left:1px solid #d6c6b2}.panel-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:8px 0}.section{background:var(--panel2);border:1px solid #ddd0bf;border-radius:10px;margin-bottom:10px;padding:10px}.row{display:flex;gap:7px;align-items:center}.row.wrap{flex-wrap:wrap}.stack{display:grid;gap:7px}.field{display:grid;grid-template-columns:1fr 90px;align-items:center;gap:8px;font-size:12px;margin:6px 0}.field input,.field select{width:100%;background:#fffaf2;color:var(--text);border:1px solid #cfc0ac;border-radius:6px;padding:7px;outline:none}.field input:focus,.field select:focus{border-color:var(--accent)}.toolbar{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.tool{padding:9px;border-radius:8px;border:1px solid #cfc0ac;background:#f1e6d6;color:var(--text);text-align:left}.tool:hover{border-color:var(--accent2);background:#eee1cf}.tool strong{display:block;font-size:12px}.tool small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+main{position:relative;overflow:hidden;background:#eadfce}.modebar{position:absolute;top:10px;left:10px;z-index:10;display:flex;background:rgba(248,241,230,.94);border:1px solid #d3c4b1;padding:4px;border-radius:9px}.modebar button{background:transparent;color:var(--muted);padding:8px 13px;border-radius:7px}.modebar button.active{background:#d8c0a0;color:#40382f}.hint{position:absolute;bottom:9px;left:10px;z-index:10;color:#6f6357;background:rgba(255,250,242,.92);border:1px solid #d3c4b1;padding:7px 9px;border-radius:7px;font-size:11px}.canvas-wrap{position:absolute;inset:0}.badge{position:absolute;right:10px;bottom:8px;color:#756857;font-size:11px;letter-spacing:.05em}
+#planCanvas{width:100%;height:100%;display:block}.selected-outline{position:absolute;border:1px dashed var(--accent2);pointer-events:none;display:none}.empty{display:none;position:absolute;inset:0;place-items:center;color:#776b5e;font-size:14px;pointer-events:none}
+.list{display:grid;gap:6px;max-height:265px;overflow:auto}.item{background:#f2e7d7;border:1px solid #d3c4b1;padding:7px;border-radius:7px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:6px}.item.selected{border-color:var(--accent);background:#eadcc8}.item .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mini{color:var(--muted);font-size:10px}.swatch{width:15px;height:15px;border-radius:4px;border:1px solid #a9957d}.danger-zone{margin-top:8px}
+#threeMount{position:absolute;inset:0;display:none}.help{font-size:11px;line-height:1.45;color:var(--muted)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(62,48,35,.28);display:none;align-items:center;justify-content:center;z-index:100}.modal-backdrop.open{display:flex}.property-modal{width:min(390px,calc(100vw - 28px));background:var(--panel2);border:1px solid #d2c1aa;border-radius:14px;box-shadow:0 18px 55px rgba(58,42,28,.24);padding:14px}.property-modal .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.property-modal .modal-title{font-size:16px;font-weight:700}.property-modal .modal-close{width:30px;height:30px;border-radius:7px;background:#eee1cf;border:1px solid #cdbca5;color:var(--text);font-size:18px;line-height:1}.property-modal .field{grid-template-columns:1fr 120px}.property-modal .field input{min-width:0}.property-modal .modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:12px}
+@media(max-width:1050px){.app{grid-template-columns:280px 1fr 250px}.project-name{min-width:180px}}@media(max-width:800px){.app{grid-template-columns:235px 1fr}.right{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand">ASP <span>Studio</span> · Планировщик</div>
+  <input id="projectName" class="project-name" value="Новый проект" aria-label="Название проекта">
+  <div class="header-actions">
+    <button class="btn" id="newBtn">Новый</button>
+    <button class="btn" id="saveBtn">Сохранить</button>
+    <button class="btn" id="loadBtn">Загрузить</button>
+    <input id="fileInput" type="file" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<aside>
+  <div class="panel-title">Планировка</div>
+  <div class="section stack">
+    <button class="tool" id="addWall"><strong>+ Стена</strong><small>Наружная или внутренняя</small></button>
+    <button class="tool" id="addWindow"><strong>+ Окно</strong><small>Проём на стене</small></button>
+    <button class="tool" id="addDoor"><strong>+ Дверь</strong><small>Распашная или сдвижная</small></button>
+    <button class="tool" id="addArch"><strong>+ Арка</strong><small>Открытый проём</small></button>
+    <button class="tool" id="addBalcony"><strong>+ Балкон</strong><small>Контур балкона</small></button>
+  </div>
+  <div class="panel-title">Мебель</div>
+  <div class="section toolbar">
+    <button class="tool" data-add="kitchen-table"><strong>Стол</strong><small>Кухня</small></button>
+    <button class="tool" data-add="chair"><strong>Стул</strong><small>Кухня</small></button>
+    <button class="tool" data-add="fridge"><strong>Холодильник</strong><small>Кухня</small></button>
+    <button class="tool" data-add="sink"><strong>Мойка</strong><small>Кухня</small></button>
+    <button class="tool" data-add="cabinet"><strong>Шкаф</strong><small>Кухня</small></button>
+    <button class="tool" data-add="upper-cabinet"><strong>Подвесной шкаф</strong><small>Кухня</small></button>
+    <button class="tool" data-add="stove"><strong>Плита</strong><small>Кухня</small></button>
+    <button class="tool" data-add="rack"><strong>Стеллаж</strong><small>Комната</small></button>
+    <button class="tool" data-add="sofa"><strong>Диван</strong><small>Комната</small></button>
+    <button class="tool" data-add="room-table"><strong>Стол</strong><small>Комната</small></button>
+    <button class="tool" data-add="armchair"><strong>Кресло</strong><small>Комната</small></button>
+    <button class="tool" data-add="wardrobe"><strong>Шкаф-купе</strong><small>Прихожая</small></button>
+    <button class="tool" data-add="bench"><strong>Скамейка</strong><small>Прихожая</small></button>
+    <button class="tool" data-add="toilet"><strong>Унитаз</strong><small>Ванная</small></button>
+    <button class="tool" data-add="shower"><strong>Душевая</strong><small>Ванная</small></button>
+    <button class="tool" data-add="washer"><strong>Стиральная</strong><small>Ванная</small></button>
+    <button class="tool" data-add="basin"><strong>Раковина</strong><small>Ванная</small></button>
+    <button class="tool" data-add="bathtub"><strong>Ванна</strong><small>Ванная</small></button>
+  </div>
+  <div class="panel-title">Покрытия пола</div>
+  <div class="section">
+    <div class="help" style="margin-bottom:8px">Замкнутые помещения определяются автоматически по стенам. Выберите покрытие для каждого помещения.</div>
+    <div id="roomFloors" class="stack"></div>
+  </div>
+  <div class="panel-title">Подсказки</div>
+  <div class="section help">В 2D: клик выбирает объект, перетаскивание двигает его. Колёсико меняет масштаб. Стены можно рисовать мышью через кнопку «Стена».</div>
+</aside>
+
+<main>
+  <div class="modebar"><button id="mode2d" class="active">2D</button><button id="mode3d">3D</button></div>
+  <div class="canvas-wrap"><canvas id="planCanvas"></canvas></div>
+  <div id="threeMount"></div>
+  <div id="empty" class="empty">Добавьте стены или мебель, чтобы начать.</div>
+  <div class="hint" id="hint">ЛКМ — выбрать/перетащить · Shift+ЛКМ — вращение объекта · Delete — удалить</div>
+  <div class="badge">ASP Studio</div>
+</main>
+
+<aside class="right">
+  <div class="panel-title">Параметры проекта</div>
+  <div class="section">
+    <div class="field"><label>Высота потолка, м</label><input id="ceiling" type="number" min="2" max="8" step="0.05" value="2.70"></div>
+    <div class="row"><button id="fitBtn" class="btn small">Вписать план</button><button id="lockBtn" class="btn small">Закрепить стены</button></div>
+  </div>
+  <div class="panel-title">Выбранный объект</div>
+  <div class="section">
+    <div id="noSelection" class="help" style="margin-bottom:8px">Ничего не выбрано.</div>
+    <button id="propertiesBtn" class="btn primary" style="width:100%" disabled>Свойства</button>
+  </div>
+<div id="propertiesModal" class="modal-backdrop" aria-hidden="true">
+  <div id="inspector" class="property-modal" role="dialog" aria-modal="true" aria-labelledby="propertiesTitle">
+    <div class="modal-head"><div id="propertiesTitle" class="modal-title">Свойства</div><button id="closePropertiesBtn" class="modal-close" aria-label="Закрыть">×</button></div>
+    <div class="field"><label>Название</label><input id="iName"></div>
+    <div class="field"><label>Ширина, см</label><input id="iW" type="number" min="1" step="1"></div>
+    <div class="field"><label>Глубина, см</label><input id="iD" type="number" min="1" step="1"></div>
+    <div class="field"><label>Высота, см</label><input id="iH" type="number" min="1" step="1"></div>
+    <div class="field"><label>X, см</label><input id="iX" type="number" step="1"></div>
+    <div class="field"><label>Y, см</label><input id="iY" type="number" step="1"></div>
+    <div class="field"><label>Поворот, °</label><input id="iR" type="number" step="1"></div>
+    <div class="field"><label>Цвет</label><input id="iColor" type="color" style="padding:2px;height:34px"></div>
+    <div id="extraFields"></div>
+    <div class="modal-actions"><button id="duplicateBtn" class="btn small">Дублировать</button><button id="deleteBtn" class="btn small danger">Удалить</button><button id="applyPropertiesBtn" class="btn primary small">Готово</button></div>
+  </div>
+</div>
+  <div class="panel-title">Объекты</div>
+  <div class="section"><div id="objectList" class="list"></div></div>
+</aside>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const canvas = $('#planCanvas');
+const ctx = canvas.getContext('2d');
+let DPR = Math.max(1, Math.min(2, devicePixelRatio || 1));
+const TYPES = {
+ wall:{label:'Стена', default:{w:3.5,d:0.20,h:2.7,color:'#b9bec7',fixed:false}},
+ window:{label:'Окно',default:{w:1.4,d:0.12,h:1.35,color:'#73c8ff'}},
+ door:{label:'Дверь',default:{w:0.90,d:0.10,h:2.10,color:'#8f623e'}},
+ arch:{label:'Арка',default:{w:1.1,d:0.16,h:2.15,color:'#d0b18b'}},
+ balcony:{label:'Балкон',default:{w:2.8,d:1.25,h:2.7,color:'#759b68'}},
+ 'kitchen-table':{label:'Кухонный стол',default:{w:1.4,d:0.8,h:0.75,color:'#a9825f'}},chair:{label:'Стул',default:{w:0.46,d:0.46,h:0.90,color:'#9a6f50'}},fridge:{label:'Холодильник',default:{w:0.65,d:0.67,h:1.90,color:'#aeb7be'}},sink:{label:'Мойка',default:{w:0.80,d:0.60,h:0.90,color:'#c6cbd0'}},cabinet:{label:'Шкаф',default:{w:0.80,d:0.60,h:0.90,color:'#9a6d4e'}},'upper-cabinet':{label:'Подвесной шкаф',default:{w:0.80,d:0.35,h:0.70,color:'#a27757'}},stove:{label:'Плита',default:{w:0.60,d:0.60,h:0.90,color:'#3f444a'}},rack:{label:'Стеллаж',default:{w:0.95,d:0.35,h:2.0,color:'#875c43'}},sofa:{label:'Диван',default:{w:2.2,d:0.95,h:0.85,color:'#697a9e'}},'room-table':{label:'Стол',default:{w:1.2,d:0.70,h:0.75,color:'#a47c5c'}},armchair:{label:'Кресло',default:{w:0.85,d:0.85,h:0.85,color:'#777ca3'}},wardrobe:{label:'Шкаф-купе',default:{w:1.8,d:0.65,h:2.3,color:'#745c4c'}},bench:{label:'Скамейка',default:{w:1.1,d:0.4,h:0.48,color:'#987454'}},toilet:{label:'Унитаз',default:{w:0.40,d:0.68,h:0.80,color:'#f0f1f3'}},shower:{label:'Душевая кабинка',default:{w:0.90,d:0.90,h:2.10,color:'#86b7c8'}},washer:{label:'Стиральная машина',default:{w:0.60,d:0.60,h:0.85,color:'#d4d7db'}},basin:{label:'Раковина',default:{w:0.60,d:0.45,h:0.85,color:'#eceeef'}},bathtub:{label:'Ванна',default:{w:1.70,d:0.75,h:0.60,color:'#d8e8ed'}}
+};
+const state={version:2,name:'Новый проект',ceiling:2.7,scale:70,offsetX:0,offsetY:0,objects:[],selected:null,wallLocked:false,mode:'2d',floorByRoom:{}};
+const FLOOR_TYPES={
+  parquet:{label:'Паркет',color:'#b8895a',pattern:'stripes'},
+  laminate:{label:'Ламинат',color:'#cfa97b',pattern:'planks'},
+  tile:{label:'Плитка',color:'#d8d2c7',pattern:'grid'},
+  stone:{label:'Камень',color:'#9c9a93',pattern:'stone'},
+  concrete:{label:'Бетон',color:'#b8b1a7',pattern:'plain'}
+};
+let roomsCache=null,roomsSig='';
+
+let toolMode=null,drawStart=null,dragging=false,dragDX=0,dragDY=0,lastMouse={x:0,y:0};
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function screenToWorld(x,y){return{x:(x-canvas.width/DPR/2-state.offsetX)/state.scale,y:(y-canvas.height/DPR/2-state.offsetY)/state.scale}}
+function worldToScreen(x,y){return{x:x*state.scale+canvas.width/DPR/2+state.offsetX,y:y*state.scale+canvas.height/DPR/2+state.offsetY}}
+function addObject(type,x=0,y=0){const t=TYPES[type],o={id:uid(),type,name:t.label,w:t.default.w,d:t.default.d,h:t.default.h,x,y,r:0,color:t.default.color,fixed:t.default.fixed||false,doorKind:type==='door'?'swing':undefined};state.objects.push(o);select(o.id);renderAll();return o}
+function selected(){return state.objects.find(o=>o.id===state.selected)}
+function select(id){state.selected=id;updateInspector();render2D();renderList()}
+function deleteSelected(){const o=selected();if(!o)return;state.objects=state.objects.filter(x=>x.id!==o.id);state.selected=null;renderAll()}
+function duplicateSelected(){const o=selected();if(!o)return;const n={...o,id:uid(),x:o.x+.3,y:o.y+.3,name:o.name+' копия'};state.objects.push(n);select(n.id);renderAll()}
+function addWallFromDrag(a,b){const dx=b.x-a.x,dy=b.y-a.y,len=Math.max(.25,Math.hypot(dx,dy));const o=addObject('wall',(a.x+b.x)/2,(a.y+b.y)/2);o.w=len;o.d=.20;o.r=Math.atan2(dy,dx)*180/Math.PI;return o}
+function resizeCanvas(){const r=canvas.getBoundingClientRect();DPR=Math.max(1,Math.min(2,devicePixelRatio||1));canvas.width=Math.round(r.width*DPR);canvas.height=Math.round(r.height*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);render2D()}
+window.addEventListener('resize',resizeCanvas);resizeCanvas();
+function objectCorners(o){const a=o.r*Math.PI/180,c=Math.cos(a),s=Math.sin(a),hx=o.w/2,hy=o.d/2;return[[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy]].map(([x,y])=>({x:o.x+x*c-y*s,y:o.y+x*s+y*c}))}
+function pointInObject(p,o){const a=-o.r*Math.PI/180,c=Math.cos(a),s=Math.sin(a),dx=p.x-o.x,dy=p.y-o.y,x=dx*c-dy*s,y=dx*s+dy*c;return Math.abs(x)<=o.w/2&&Math.abs(y)<=o.d/2}
+function wallsSignature(){return state.objects.filter(o=>o.type==='wall').map(o=>[o.x,o.y,o.w,o.d,o.r]).join(';')}
+function pointSegDistance(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,t=clamp(((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1),0,1),x=ax+t*dx,y=ay+t*dy;return Math.hypot(px-x,py-y)}
+function isBlockedPoint(x,y,walls){for(const o of walls){const a=o.r*Math.PI/180,c=Math.cos(a),s=Math.sin(a),hx=o.w/2,hy=o.d/2;const dx=x-o.x,dy=y-o.y,lx=dx*c+dy*s,ly=-dx*s+dy*c;if(Math.abs(lx)<=hx+0.05 && Math.abs(ly)<=hy+0.05)return true}return false}
+function detectRooms(){const sig=wallsSignature();if(sig===roomsSig&&roomsCache)return roomsCache;roomsSig=sig;roomsCache=[];const walls=state.objects.filter(o=>o.type==='wall');if(walls.length<3)return roomsCache;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const w of walls){for(const p of objectCorners(w)){minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y)}}if(!isFinite(minX))return roomsCache;minX-=0.35;minY-=0.35;maxX+=0.35;maxY+=0.35;const step=.20,nx=Math.max(1,Math.ceil((maxX-minX)/step)),ny=Math.max(1,Math.ceil((maxY-minY)/step));if(nx*ny>45000){const k=Math.sqrt(nx*ny/45000);return roomsCache=detectRoomsCoarser(walls,minX,minY,maxX,maxY,step*k)}
+const blocked=new Uint8Array(nx*ny),outside=new Uint8Array(nx*ny);const id=(ix,iy)=>iy*nx+ix;for(let iy=0;iy<ny;iy++)for(let ix=0;ix<nx;ix++){const x=minX+(ix+.5)*step,y=minY+(iy+.5)*step;blocked[id(ix,iy)]=isBlockedPoint(x,y,walls)?1:0}
+const q=[];for(let ix=0;ix<nx;ix++){for(const iy of [0,ny-1]){const k=id(ix,iy);if(!blocked[k]&&!outside[k]){outside[k]=1;q.push(k)}}}for(let iy=0;iy<ny;iy++){for(const ix of [0,nx-1]){const k=id(ix,iy);if(!blocked[k]&&!outside[k]){outside[k]=1;q.push(k)}}}for(let qi=0;qi<q.length;qi++){const k=q[qi],ix=k%nx,iy=Math.floor(k/nx);for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=ix+dx,y=iy+dy;if(x<0||y<0||x>=nx||y>=ny)continue;const nk=id(x,y);if(!blocked[nk]&&!outside[nk]){outside[nk]=1;q.push(nk)}}}
+const seen=new Uint8Array(nx*ny);for(let sy=0;sy<ny;sy++)for(let sx=0;sx<nx;sx++){const start=id(sx,sy);if(blocked[start]||outside[start]||seen[start])continue;const comp=[],qq=[start];seen[start]=1;let area=0,cx=0,cy=0;for(let qi=0;qi<qq.length;qi++){const k=qq[qi],ix=k%nx,iy=Math.floor(k/nx),x=minX+(ix+.5)*step,y=minY+(iy+.5)*step;comp.push([ix,iy]);area+=step*step;cx+=x;cy+=y;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const xx=ix+dx,yy=iy+dy;if(xx<0||yy<0||xx>=nx||yy>=ny)continue;const nk=id(xx,yy);if(!blocked[nk]&&!outside[nk]&&!seen[nk]){seen[nk]=1;qq.push(nk)}}}if(area>=.45){const center={x:cx/comp.length,y:cy/comp.length};const key=`${center.x.toFixed(2)}|${center.y.toFixed(2)}`;roomsCache.push({key,center,area,cells:comp,step,minX,minY,nx,ny})}}
+roomsCache.forEach((r,i)=>r.name=`Помещение ${i+1}`);return roomsCache}
+function detectRoomsCoarser(walls,minX,minY,maxX,maxY,step){const old=walls;const saved=state.objects;const nx=Math.ceil((maxX-minX)/step),ny=Math.ceil((maxY-minY)/step);const blocked=new Uint8Array(nx*ny),outside=new Uint8Array(nx*ny),seen=new Uint8Array(nx*ny),id=(x,y)=>y*nx+x;for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)blocked[id(x,y)]=isBlockedPoint(minX+(x+.5)*step,minY+(y+.5)*step,old);const q=[];for(let x=0;x<nx;x++)for(const y of [0,ny-1]){const k=id(x,y);if(!blocked[k]&&!outside[k])outside[k]=1,q.push(k)}for(let y=0;y<ny;y++)for(const x of [0,nx-1]){const k=id(x,y);if(!blocked[k]&&!outside[k])outside[k]=1,q.push(k)}for(let qi=0;qi<q.length;qi++){const k=q[qi],x=k%nx,y=Math.floor(k/nx);for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<nx&&yy<ny){const nk=id(xx,yy);if(!blocked[nk]&&!outside[nk]){outside[nk]=1;q.push(nk)}}}}const out=[];for(let sy=0;sy<ny;sy++)for(let sx=0;sx<nx;sx++){const st=id(sx,sy);if(blocked[st]||outside[st]||seen[st])continue;const qq=[st];seen[st]=1;let area=0,cx=0,cy=0;for(let qi=0;qi<qq.length;qi++){const k=qq[qi],x=k%nx,y=Math.floor(k/nx);area+=step*step;cx+=minX+(x+.5)*step;cy+=minY+(y+.5)*step;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<nx&&yy<ny){const nk=id(xx,yy);if(!blocked[nk]&&!outside[nk]&&!seen[nk]){seen[nk]=1;qq.push(nk)}}}}if(area>=.7){const center={x:cx/qq.length,y:cy/qq.length},key=`${center.x.toFixed(2)}|${center.y.toFixed(2)}`;out.push({key,center,area,cells:qq.map(k=>[k%nx,Math.floor(k/nx)]),step,minX,minY,nx,ny,name:`Помещение ${out.length+1}`})}}return out}
+function floorForRoom(room){return state.floorByRoom[room.key]||'parquet'}
+function renderFloor2D(){const rooms=detectRooms();for(const r of rooms){const f=FLOOR_TYPES[floorForRoom(r)];ctx.save();for(const [ix,iy] of r.cells){const wx=r.minX+(ix+.02)*r.step,wy=r.minY+(iy+.02)*r.step;const a=worldToScreen(wx,wy),b=worldToScreen(wx+r.step-.04,wy+r.step-.04);ctx.fillStyle=f.color;ctx.globalAlpha=.42;ctx.fillRect(a.x,a.y,b.x-a.x,b.y-a.y);if(f.pattern==='grid'){ctx.globalAlpha=.22;ctx.strokeStyle='#7d746a';ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y)}}ctx.restore()}}
+function renderRoomFloorUI(){const el=$('#roomFloors');if(!el)return;const rooms=detectRooms();el.innerHTML='';if(!rooms.length){el.innerHTML='<div class="help">Пока нет замкнутых помещений. Нарисуйте наружные стены и внутренние перегородки, образующие замкнутые контуры.</div>';return}rooms.forEach((r,i)=>{const row=document.createElement('div');row.className='field';row.style.gridTemplateColumns='1fr 115px';const lab=document.createElement('label');lab.innerHTML=`${r.name}<span class="mini" style="display:block">≈ ${r.area.toFixed(1)} м²</span>`;const sel=document.createElement('select');for(const [k,v] of Object.entries(FLOOR_TYPES)){const op=document.createElement('option');op.value=k;op.textContent=v.label;if(k===floorForRoom(r))op.selected=true;sel.appendChild(op)}sel.onchange=()=>{state.floorByRoom[r.key]=sel.value;renderAll()};row.append(lab,sel);el.appendChild(row)})}
+function render2D(){if(state.mode!=='2d')return;const w=canvas.width/DPR,h=canvas.height/DPR;ctx.clearRect(0,0,w,h);ctx.fillStyle='#eadfce';ctx.fillRect(0,0,w,h);const grid=state.scale;ctx.strokeStyle='#d9cbbb';ctx.lineWidth=1;ctx.beginPath();for(let x=(w/2+state.offsetX)%grid;x<w;x+=grid){ctx.moveTo(x,0);ctx.lineTo(x,h)}for(let y=(h/2+state.offsetY)%grid;y<h;y+=grid){ctx.moveTo(0,y);ctx.lineTo(w,y)}ctx.stroke();ctx.strokeStyle='#c8b9a5';ctx.beginPath();ctx.moveTo(w/2+state.offsetX,0);ctx.lineTo(w/2+state.offsetX,h);ctx.moveTo(0,h/2+state.offsetY);ctx.lineTo(w,h/2+state.offsetY);ctx.stroke();renderFloor2D();for(const o of state.objects)draw2DObject(o);if(drawStart){ctx.strokeStyle='#8f7bff';ctx.setLineDash([6,4]);const a=worldToScreen(drawStart.x,drawStart.y),b=worldToScreen(lastMouse.x,lastMouse.y);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([])}$('#empty').style.display=state.objects.length?'none':'grid'}
+function draw2DObject(o){const pts=objectCorners(o).map(p=>worldToScreen(p.x,p.y));ctx.save();ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=o.color;ctx.globalAlpha=o.type==='wall'?1:.8;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=o.id===state.selected?'#a58dff':'#59616d';ctx.lineWidth=o.id===state.selected?2:1;ctx.stroke();const c=worldToScreen(o.x,o.y);ctx.fillStyle='#e8ebef';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(o.name,c.x,c.y);if(['window','door','arch'].includes(o.type)){ctx.strokeStyle='#e9f6ff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(pts[1].x,pts[1].y);ctx.stroke()}ctx.restore()}
+function renderList(){const list=$('#objectList');list.innerHTML='';for(const o of state.objects){const d=document.createElement('div');d.className='item'+(o.id===state.selected?' selected':'');d.innerHTML=`<span class="name">${esc(o.name)}</span><span class="row"><span class="swatch" style="background:${o.color}"></span><span class="mini">${TYPES[o.type]?.label||o.type}</span></span>`;d.onclick=()=>select(o.id);list.appendChild(d)}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function updateInspector(){const o=selected();$('#noSelection').textContent=o?'Выбран: '+o.name:'Ничего не выбрано.';$('#propertiesBtn').disabled=!o;if(!o)return;$('#iName').value=o.name;$('#iW').value=Math.round(o.w*100);$('#iD').value=Math.round(o.d*100);$('#iH').value=Math.round(o.h*100);$('#iX').value=Math.round(o.x*100);$('#iY').value=Math.round(o.y*100);$('#iR').value=Math.round(o.r);$('#iColor').value=o.color;const ex=$('#extraFields');ex.innerHTML='';if(o.type==='door'){ex.innerHTML='<div class="field"><label>Тип двери</label><select id="doorKind"><option value="swing">Распашная</option><option value="slide">Сдвижная</option></select></div>';$('#doorKind').value=o.doorKind;$('#doorKind').onchange=e=>{o.doorKind=e.target.value;renderAll()}}if(o.type==='wall')ex.innerHTML='<div class="help">Закреплённая стена больше не перемещается мышью.</div>'}
+for(const id of ['iName','iW','iD','iH','iX','iY','iR','iColor'])$('#'+id).addEventListener('change',()=>{const o=selected();if(!o)return;const v=$('#'+id).value;if(id==='iName')o.name=v;else if(id==='iW')o.w=Math.max(.01,(+v||o.w*100)/100);else if(id==='iD')o.d=Math.max(.01,(+v||o.d*100)/100);else if(id==='iH')o.h=Math.max(.01,(+v||o.h*100)/100);else if(id==='iX')o.x=(+v||0)/100;else if(id==='iY')o.y=(+v||0)/100;else if(id==='iR')o.r=+v||0;else o.color=v;renderAll()});
+function openProperties(){if(!selected())return;updateInspector();$('#propertiesModal').classList.add('open');$('#propertiesModal').setAttribute('aria-hidden','false')}function closeProperties(){ $('#propertiesModal').classList.remove('open');$('#propertiesModal').setAttribute('aria-hidden','true')}$('#propertiesBtn').onclick=openProperties;$('#closePropertiesBtn').onclick=closeProperties;$('#applyPropertiesBtn').onclick=closeProperties;$('#propertiesModal').addEventListener('mousedown',e=>{if(e.target.id==='propertiesModal')closeProperties()});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeProperties()});
+$('#ceiling').addEventListener('change',()=>{state.ceiling=clamp(+$(`#ceiling`).value||2.7,2,8);render3D()});
+canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();lastMouse={x:e.clientX-r.left,y:e.clientY-r.top};if(drawStart){render2D();return}if(!dragging)return;const p=screenToWorld(lastMouse.x,lastMouse.y),o=selected();if(o&&!o.fixed){o.x=p.x-dragDX;o.y=p.y-dragDY;updateInspector();render2D();renderList()}});
+canvas.addEventListener('mousedown',e=>{if(e.button!==0)return;const r=canvas.getBoundingClientRect(),p=screenToWorld(e.clientX-r.left,e.clientY-r.top);if(toolMode==='wall'){drawStart=p;return}for(let i=state.objects.length-1;i>=0;i--){const o=state.objects[i];if(pointInObject(p,o)){select(o.id);if(e.shiftKey){o.r+=15;renderAll();return}if(!o.fixed){dragging=true;dragDX=p.x-o.x;dragDY=p.y-o.y}return}}select(null)});
+window.addEventListener('mouseup',e=>{if(drawStart){const r=canvas.getBoundingClientRect(),p=screenToWorld(e.clientX-r.left,e.clientY-r.top);if(Math.hypot(p.x-drawStart.x,p.y-drawStart.y)>.25)addWallFromDrag(drawStart,p);drawStart=null;toolMode=null;renderAll();return}dragging=false});
+canvas.addEventListener('wheel',e=>{if(state.mode!=='2d')return;e.preventDefault();const factor=e.deltaY<0?1.08:.92,before=screenToWorld(lastMouse.x,lastMouse.y);state.scale=clamp(state.scale*factor,20,220);const after=screenToWorld(lastMouse.x,lastMouse.y);state.offsetX+=(after.x-before.x)*state.scale;state.offsetY+=(after.y-before.y)*state.scale;render2D()},{passive:false});
+window.addEventListener('keydown',e=>{if(e.key==='Delete')deleteSelected();if(e.key==='Escape'){toolMode=null;drawStart=null;render2D()}});
+$('#addWall').onclick=()=>{toolMode='wall';drawStart=null};$('#addWindow').onclick=()=>addObject('window');$('#addDoor').onclick=()=>addObject('door');$('#addArch').onclick=()=>addObject('arch');$('#addBalcony').onclick=()=>addObject('balcony');document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dataset.add));
+$('#deleteBtn').onclick=deleteSelected;$('#duplicateBtn').onclick=duplicateSelected;
+$('#fitBtn').onclick=()=>{if(!state.objects.length){state.offsetX=state.offsetY=0;state.scale=70;render2D();return}let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const o of state.objects)for(const p of objectCorners(o)){minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y)}const w=canvas.clientWidth,h=canvas.clientHeight;state.scale=Math.max(20,Math.min(160,Math.min((w-80)/(maxX-minX||1),(h-80)/(maxY-minY||1))));const cx=(minX+maxX)/2,cy=(minY+maxY)/2;state.offsetX=-cx*state.scale;state.offsetY=-cy*state.scale;render2D()};
+$('#lockBtn').onclick=()=>{state.wallLocked=!state.wallLocked;state.objects.forEach(o=>{if(o.type==='wall')o.fixed=state.wallLocked});$('#lockBtn').textContent=state.wallLocked?'Разблокировать стены':'Закрепить стены';renderAll()};
+$('#saveBtn').onclick=()=>{state.name=$('#projectName').value.trim()||'Новый проект';const blob=new Blob([JSON.stringify({...state,mode:'2d'},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=state.name.replace(/[^\w\-а-яА-ЯёЁ]+/g,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+$('#loadBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);state.name=d.name||'Проект';state.ceiling=+d.ceiling||2.7;state.objects=Array.isArray(d.objects)?d.objects:[];state.wallLocked=!!d.wallLocked;state.floorByRoom=d.floorByRoom&&typeof d.floorByRoom==='object'?d.floorByRoom:{};$('#projectName').value=state.name;$('#ceiling').value=state.ceiling;$('#lockBtn').textContent=state.wallLocked?'Разблокировать стены':'Закрепить стены';select(null);renderAll()}catch(err){alert('Не удалось загрузить проект: '+err.message)}};rd.readAsText(f);e.target.value=''};
+$('#newBtn').onclick=()=>{if(confirm('Создать новый проект? Несохранённые изменения будут потеряны.')){state.name='Новый проект';state.ceiling=2.7;state.objects=[];state.selected=null;state.wallLocked=false;state.floorByRoom={};$('#projectName').value=state.name;$('#ceiling').value=2.7;$('#lockBtn').textContent='Закрепить стены';state.mode='2d';show2D();renderAll()}};
+
+const mount=$('#threeMount');const c3=document.createElement('canvas');c3.id='render3dCanvas';c3.style.width='100%';c3.style.height='100%';mount.appendChild(c3);const x3=c3.getContext('2d');let cam={yaw:.15,pitch:-1.10,distance:16,target:[0,0,0]},orbit=false,ox=0,oy=0;function colorShade(hex,amt){let n=parseInt(hex.slice(1),16),r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;return '#'+[r,g,b].map(v=>clamp(v,0,255).toString(16).padStart(2,'0')).join('')}
+function project3(v){const [x0,y0,z0]=v;let x=x0-cam.target[0],y=y0-cam.target[1],z=z0-cam.target[2],cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw),x1=x*cy-z*sy,z1=x*sy+z*cy,cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch),y1=y*cp-z1*sp,z2=y*sp+z1*cp;const f=520/(cam.distance+z2+8);return{x:c3.clientWidth/2+x1*f,y:c3.clientHeight/2-y1*f,z:z2}}
+function draw3Box(o){const a=o.r*Math.PI/180,c=Math.cos(a),s=Math.sin(a),hx=o.w/2,hy=o.d/2,h=o.h;const base=[[-hx,-hy,0],[hx,-hy,0],[hx,hy,0],[-hx,hy,0]].map(([x,y,z])=>[o.x+x*c-y*s,0+z,o.y+x*s+y*c]);const top=base.map(v=>[v[0],h,v[2]]);const vs=[...base,...top].map(v=>project3(v));const faces=[[0,1,2,3],[4,7,6,5],[0,4,5,1],[1,5,6,2],[2,6,7,3],[3,7,4,0]];const mats=[colorShade(o.color,-35),colorShade(o.color,18),colorShade(o.color,-15),colorShade(o.color,-25),colorShade(o.color,-5),colorShade(o.color,-30)];return faces.map((face,i)=>{const pts=face.map(j=>vs[j]);return{pts,avg:pts.reduce((a,p)=>a+p.z,0)/pts.length,color:mats[i]}})}
+function render3D(){if(state.mode!=='3d')return;const w=mount.clientWidth,h=mount.clientHeight,d=devicePixelRatio||1;c3.width=Math.max(1,w*d);c3.height=Math.max(1,h*d);x3.setTransform(d,0,0,d,0,0);x3.clearRect(0,0,w,h);const bg=x3.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#f7f0e5');bg.addColorStop(1,'#e7d8c4');x3.fillStyle=bg;x3.fillRect(0,0,w,h);const grid=1;for(let i=-20;i<=20;i++){const p1=project3([i*grid,0,-20]),p2=project3([i*grid,0,20]),q1=project3([-20,0,i*grid]),q2=project3([20,0,i*grid]);x3.strokeStyle='#d1c1ad';x3.lineWidth=.7;x3.beginPath();x3.moveTo(p1.x,p1.y);x3.lineTo(p2.x,p2.y);x3.moveTo(q1.x,q1.y);x3.lineTo(q2.x,q2.y);x3.stroke()}let faces=[];for(const r of detectRooms()){const f=FLOOR_TYPES[floorForRoom(r)];for(const [ix,iy] of r.cells){const wx=r.minX+ix*r.step,wy=r.minY+iy*r.step;const pts=[[wx,0.008,wy],[wx+r.step,0.008,wy],[wx+r.step,0.008,wy+r.step],[wx,0.008,wy+r.step]].map(v=>project3(v));faces.push({pts,avg:pts.reduce((a,p)=>a+p.z,0)/4,color:f.color,floor:true})}}for(const o of state.objects)faces.push(...draw3Box(o));faces.sort((a,b)=>b.avg-a.avg);for(const f of faces){x3.beginPath();f.pts.forEach((p,i)=>i?x3.lineTo(p.x,p.y):x3.moveTo(p.x,p.y));x3.closePath();x3.fillStyle=f.color;x3.fill();x3.strokeStyle='#8b7c6b';x3.lineWidth=.7;x3.stroke()}}
+mount.addEventListener('mousedown',e=>{if(state.mode!=='3d')return;orbit=true;ox=e.clientX;oy=e.clientY});window.addEventListener('mouseup',()=>orbit=false);window.addEventListener('mousemove',e=>{if(!orbit||state.mode!=='3d')return;cam.yaw+=(e.clientX-ox)*.008;cam.pitch=clamp(cam.pitch+(e.clientY-oy)*.006,-1.45,.45);ox=e.clientX;oy=e.clientY;render3D()});mount.addEventListener('wheel',e=>{if(state.mode!=='3d')return;e.preventDefault();cam.distance=clamp(cam.distance*(e.deltaY>0?1.08:.92),4,50);render3D()},{passive:false});window.addEventListener('resize',()=>render3D());
+$('#mode2d').onclick=show2D;$('#mode3d').onclick=show3D;function show3D(){cam.pitch=-1.10;cam.yaw=.15;cam.target=[0,0,0];state.mode='3d';$('#mode2d').classList.remove('active');$('#mode3d').classList.add('active');canvas.parentElement.style.display='none';mount.style.display='block';$('#hint').textContent='3D: ЛКМ — вращение · Колесо — приближение';render3D()}function show2D(){state.mode='2d';$('#mode3d').classList.remove('active');$('#mode2d').classList.add('active');canvas.parentElement.style.display='block';mount.style.display='none';$('#hint').textContent='ЛКМ — выбрать/перетащить · Shift+ЛКМ — вращение объекта · Delete — удалить';render2D()}
+function renderAll(){renderRoomFloorUI();render2D();renderList();updateInspector();if(state.mode==='3d')render3D()}
+// стартовый пример
+addWallFromDrag({x:-4,y:-3},{x:4,y:-3});addWallFromDrag({x:4,y:-3},{x:4,y:3});addWallFromDrag({x:4,y:3},{x:-4,y:3});addWallFromDrag({x:-4,y:3},{x:-4,y:-3});addWallFromDrag({x:0,y:-3},{x:0,y:0});addObject('door',0,-2.15);addObject('window',2.2,3);addObject('sofa',-2,-1);addObject('kitchen-table',2,-1);$('#fitBtn').click();
+</script>
+</body>
+</html>
