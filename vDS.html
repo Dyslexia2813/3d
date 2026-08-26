@@ -235,11 +235,11 @@
             project: {
                 name: 'Моя квартира',
                 ceilingHeight: 2.7,
-                walls: [],
-                points: [],
-                openings: [],
-                balcony: null,
-                furniture: [],
+                walls: [],      // Пусто при старте
+                points: [],     // Пусто при старте
+                openings: [],   // Пусто при старте
+                balcony: null,  // Пусто при старте
+                furniture: [],  // Пусто при старте
             },
             nextId: 1,
             view3d: false,
@@ -347,7 +347,6 @@
             grid.position.y = -0.01;
             threeScene.add(grid);
 
-            // Запускаем цикл рендеринга
             function animate() {
                 threeAnimationId = requestAnimationFrame(animate);
                 threeControls.update();
@@ -421,7 +420,6 @@
                 wallMesh.userData = { type: 'wall', id: w.id };
                 threeScene.add(wallMesh);
 
-                // Проёмы (окна, двери, арки) на этой стене
                 p.openings.forEach(op => {
                     if (op.wallId !== w.id) return;
                     const t = op.position || 0.5;
@@ -444,7 +442,7 @@
                 });
             });
 
-            // Потолок (полупрозрачный, чтобы видеть сверху)
+            // Потолок
             if (allX.length) {
                 const ceilGeo = new THREE.BoxGeometry(floorW, 0.05, floorD);
                 const ceilMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, transparent: true, opacity: 0.15,
@@ -555,7 +553,6 @@
         }
 
         function screenToWorld(sx, sy) {
-            // Исправлена ошибка знака offsetY
             const wx = (sx - canvas.width / 2 - state.offsetX) / (state.zoom * 50);
             const wy = (canvas.height / 2 + state.offsetY - sy) / (state.zoom * 50);
             return { x: wx, y: wy };
@@ -645,7 +642,7 @@
                 ctx.fill();
             });
 
-            // Точки (для выделения)
+            // Точки
             if (state.mode === 'draw_wall' || state.selectedWall) {
                 p.points.forEach(pt => {
                     const sp = worldToScreen(pt.x, pt.y);
@@ -659,7 +656,7 @@
                 });
             }
 
-            // Проёмы (окна, двери, арки)
+            // Проёмы
             p.openings.forEach(op => {
                 const wall = p.walls.find(w => w.id === op.wallId);
                 if (!wall) return;
@@ -702,7 +699,6 @@
                 ctx.rotate(-rot);
                 const sw = w * state.zoom * 50;
                 const sd = d * state.zoom * 50;
-                // Исправлено: выбранная мебель сохраняет свой цвет, но обводится оранжевым
                 ctx.fillStyle = f.color || '#888';
                 ctx.strokeStyle = isSel ? '#ffaa00' : '#fff';
                 ctx.lineWidth = isSel ? 3 : 1;
@@ -1572,85 +1568,6 @@
         }
 
         init();
-
-        // Добавляем демонстрационную мебель для примера
-        setTimeout(() => {
-            if (state.project.furniture.length === 0) {
-                const demoFurniture = [
-                    { category: 'kitchen', furnitureType: 'table', x: 3, y: 2, width: 1.2, depth: 0.8, height: 0.75, rotation: 0, color: '#8B5A2B' },
-                    { category: 'kitchen', furnitureType: 'chair', x: 2.5, y: 1.8, width: 0.45, depth: 0.45, height: 0.9, rotation: 0, color: '#8B5A2B' },
-                    { category: 'kitchen', furnitureType: 'fridge', x: 0.5, y: 0.5, width: 0.7, depth: 0.7, height: 1.8, rotation: 0, color: '#C0C0C0' },
-                    { category: 'living', furnitureType: 'sofa', x: -1, y: 2.5, width: 2.0, depth: 0.9, height: 0.8, rotation: 0, color: '#4A6FA5' },
-                    { category: 'bathroom', furnitureType: 'toilet', x: -3, y: -1, width: 0.4, depth: 0.7, height: 0.8, rotation: 0, color: '#FFFFFF' },
-                ];
-                demoFurniture.forEach(f => {
-                    f.id = state.nextId++;
-                    state.project.furniture.push(f);
-                });
-                const wallPoints = [
-                    { x: -4, y: -3 }, { x: 4, y: -3 }, { x: 4, y: 3 }, { x: -4, y: 3 },
-                ];
-                const pointIds = [];
-                wallPoints.forEach(p => {
-                    const newPt = { id: state.nextId++, x: p.x, y: p.y };
-                    state.project.points.push(newPt);
-                    pointIds.push(newPt.id);
-                });
-                for (let i = 0; i < pointIds.length; i++) {
-                    state.project.walls.push({
-                        id: state.nextId++,
-                        point1: pointIds[i],
-                        point2: pointIds[(i + 1) % pointIds.length],
-                        thickness: 0.4,
-                        type: 'outer',
-                        color: '#555570',
-                    });
-                }
-                const innerP1 = { id: state.nextId++, x: 0, y: -3 };
-                const innerP2 = { id: state.nextId++, x: 0, y: 3 };
-                state.project.points.push(innerP1, innerP2);
-                state.project.walls.push({
-                    id: state.nextId++,
-                    point1: innerP1.id,
-                    point2: innerP2.id,
-                    thickness: 0.2,
-                    type: 'inner',
-                    color: '#666680',
-                });
-                state.project.openings.push({
-                    id: state.nextId++,
-                    wallId: state.project.walls[0].id,
-                    position: 0.5,
-                    width: 1.5,
-                    height: 1.5,
-                    type: 'window',
-                    doorType: 'none',
-                    color: '#88ccff',
-                });
-                state.project.openings.push({
-                    id: state.nextId++,
-                    wallId: state.project.walls[3].id,
-                    position: 0.5,
-                    width: 0.9,
-                    height: 2.1,
-                    type: 'door',
-                    doorType: 'swing',
-                    color: '#8B5A2B',
-                });
-                state.project.balcony = {
-                    id: state.nextId++,
-                    x: 4,
-                    y: 0,
-                    width: 3,
-                    depth: 1.5,
-                    color: '#99bb99',
-                };
-                updatePropertiesPanel();
-                render2D();
-                if (state.view3d) build3DScene();
-                statusText.textContent = 'Демонстрационный проект загружен. Экспериментируйте!';
-            }
-        }, 100);
 
         console.log('ASP Studio — приложение готово');
         console.log('Подсказки: R — повернуть мебель, Delete — удалить, Esc — режим выбора');

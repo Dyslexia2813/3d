@@ -16,7 +16,8 @@ main{position:relative;overflow:hidden;background:#eadfce}.modebar{position:abso
 .list{display:grid;gap:6px;max-height:265px;overflow:auto}.item{background:#f2e7d7;border:1px solid #d3c4b1;padding:7px;border-radius:7px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:6px}.item.selected{border-color:var(--accent);background:#eadcc8}.item .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mini{color:var(--muted);font-size:10px}.swatch{width:15px;height:15px;border-radius:4px;border:1px solid #a9957d}.danger-zone{margin-top:8px}
 #threeMount{position:absolute;inset:0;display:none}.help{font-size:11px;line-height:1.45;color:var(--muted)}
 .modal-backdrop{position:fixed;inset:0;background:rgba(62,48,35,.28);display:none;align-items:center;justify-content:center;z-index:100}.modal-backdrop.open{display:flex}.property-modal{width:min(390px,calc(100vw - 28px));background:var(--panel2);border:1px solid #d2c1aa;border-radius:14px;box-shadow:0 18px 55px rgba(58,42,28,.24);padding:14px}.property-modal .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.property-modal .modal-title{font-size:16px;font-weight:700}.property-modal .modal-close{width:30px;height:30px;border-radius:7px;background:#eee1cf;border:1px solid #cdbca5;color:var(--text);font-size:18px;line-height:1}.property-modal .field{grid-template-columns:1fr 120px}.property-modal .field input{min-width:0}.property-modal .modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:12px}
-@media(max-width:1050px){.app{grid-template-columns:280px 1fr 250px}.project-name{min-width:180px}}@media(max-width:800px){.app{grid-template-columns:235px 1fr}.right{display:none}}
+@media(max-width:1050px){.app{grid-template-columns:280px 1fr 250px}.project-name{min-width:180px}}.intro p{font-size:11px;line-height:1.45;color:var(--muted);margin:7px 0}.intro strong{font-size:13px}.intro b{color:var(--text)}
+@media(max-width:800px){.app{grid-template-columns:235px 1fr}.right{display:none}}
 </style>
 </head>
 <body>
@@ -33,6 +34,14 @@ main{position:relative;overflow:hidden;background:#eadfce}.modebar{position:abso
 </header>
 
 <aside>
+  <div class="panel-title">О приложении</div>
+  <div class="section intro">
+    <strong>ASP Studio — Планировщик квартиры</strong>
+    <p>Соберите план квартиры в 2D, расставьте мебель и оборудование, а затем переключитесь в 3D, чтобы осмотреть результат с разных ракурсов.</p>
+    <p><b>Начало работы:</b> добавьте стены и задайте их размеры. Затем можно размещать окна, двери, арки, балкон и мебель.</p>
+    <p><b>Свойства</b> выбранного объекта позволяют менять размеры, положение, поворот и цвет. Размеры вводятся в сантиметрах.</p>
+    <p><b>Пол</b> можно выбирать отдельно для каждого замкнутого помещения. Проект сохраняется в JSON и может быть загружен позже.</p>
+  </div>
   <div class="panel-title">Планировка</div>
   <div class="section stack">
     <button class="tool" id="addWall"><strong>+ Стена</strong><small>Наружная или внутренняя</small></button>
@@ -190,8 +199,6 @@ function render3D(){if(state.mode!=='3d')return;const w=mount.clientWidth,h=moun
 mount.addEventListener('mousedown',e=>{if(state.mode!=='3d')return;orbit=true;ox=e.clientX;oy=e.clientY});window.addEventListener('mouseup',()=>orbit=false);window.addEventListener('mousemove',e=>{if(!orbit||state.mode!=='3d')return;cam.yaw+=(e.clientX-ox)*.008;cam.pitch=clamp(cam.pitch+(e.clientY-oy)*.006,-1.45,.45);ox=e.clientX;oy=e.clientY;render3D()});mount.addEventListener('wheel',e=>{if(state.mode!=='3d')return;e.preventDefault();cam.distance=clamp(cam.distance*(e.deltaY>0?1.08:.92),4,50);render3D()},{passive:false});window.addEventListener('resize',()=>render3D());
 $('#mode2d').onclick=show2D;$('#mode3d').onclick=show3D;function show3D(){cam.pitch=-1.10;cam.yaw=.15;cam.target=[0,0,0];state.mode='3d';$('#mode2d').classList.remove('active');$('#mode3d').classList.add('active');canvas.parentElement.style.display='none';mount.style.display='block';$('#hint').textContent='3D: ЛКМ — вращение · Колесо — приближение';render3D()}function show2D(){state.mode='2d';$('#mode3d').classList.remove('active');$('#mode2d').classList.add('active');canvas.parentElement.style.display='block';mount.style.display='none';$('#hint').textContent='ЛКМ — выбрать/перетащить · Shift+ЛКМ — вращение объекта · Delete — удалить';render2D()}
 function renderAll(){renderRoomFloorUI();render2D();renderList();updateInspector();if(state.mode==='3d')render3D()}
-// стартовый пример
-addWallFromDrag({x:-4,y:-3},{x:4,y:-3});addWallFromDrag({x:4,y:-3},{x:4,y:3});addWallFromDrag({x:4,y:3},{x:-4,y:3});addWallFromDrag({x:-4,y:3},{x:-4,y:-3});addWallFromDrag({x:0,y:-3},{x:0,y:0});addObject('door',0,-2.15);addObject('window',2.2,3);addObject('sofa',-2,-1);addObject('kitchen-table',2,-1);$('#fitBtn').click();
 </script>
 </body>
 </html>
