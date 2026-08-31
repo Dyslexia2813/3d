@@ -4,34 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ASP Studio — Планировщик квартиры</title>
-	
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="favicon.png">
-    
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg-app: #14181d;
-  --bg-panel: #1a1f26;
-  --bg-panel-2: #20262e;
-  --bg-panel-3: #262d36;
-  --border: #2b323b;
-  --border-soft: #363e48;
-  --text-primary: #e9edf1;
-  --text-secondary: #9aa5b1;
-  --text-muted: #6b7480;
-  --accent: #d18b3d;
-  --accent-hover: #e2a154;
-  --accent-ink: #241505;
-  --danger: #d1553d;
-  --danger-hover: #dd6a52;
+  --bg-app: #ddc9a0;
+  --bg-panel: #e4d3ab;
+  --bg-panel-2: #d8c294;
+  --bg-panel-3: #c9b17f;
+  --border: #c2ab80;
+  --border-soft: #b39a6c;
+  --text-primary: #3c2f1e;
+  --text-secondary: #59462e;
+  --text-muted: #75603f;
+  --accent: #bb7530;
+  --accent-hover: #9c611f;
+  --accent-ink: #2a1806;
+  --danger: #b8492f;
+  --danger-hover: #c65d3f;
   --success: #4a9d6f;
   --canvas-bg: #eef1f2;
   --grid-minor: #d7dee3;
   --grid-major: #b9c4cd;
   --balcony-fill: rgba(148, 176, 154, .22);
+  --overlay-bg: rgba(38, 28, 15, .88);
+  --overlay-text: #f5ead4;
+  --overlay-text-muted: #d8c4a4;
+  --overlay-accent: #ffc178;
   --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
@@ -65,9 +65,9 @@ input[type="text"] { width: 100%; }
 .brand { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
 .brand-mark {
   width: 26px; height: 26px; border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), #a9642a);
+  background: linear-gradient(135deg, var(--accent), #8a5220);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #241505;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fbf3e6;
 }
 .brand-name { font-family: var(--font-display); font-weight: 600; font-size: 14.5px; letter-spacing: .2px; white-space: nowrap; }
 .topbar-sep { width: 1px; align-self: stretch; margin: 10px 2px; background: var(--border-soft); }
@@ -100,6 +100,7 @@ input[type="text"] { width: 100%; }
 
 /* ---------------- workspace grid ---------------- */
 .workspace { display: grid; grid-template-columns: 252px 1fr 272px; min-height: 0; }
+.workspace.mode-3d { grid-template-columns: 1fr; }
 
 .left-rail, .right-rail {
   background: var(--bg-panel); border-right: 1px solid var(--border);
@@ -181,19 +182,19 @@ input[type="text"] { width: 100%; }
   pointer-events: none;
 }
 .empty-hint-card {
-  background: rgba(26,31,38,.92); color: var(--text-primary); border: 1px solid var(--border-soft);
+  background: var(--overlay-bg); color: var(--overlay-text); border: 1px solid rgba(255,255,255,.14);
   border-radius: 12px; padding: 22px 28px; max-width: 360px; text-align: center; font-size: 13.5px; line-height: 1.55;
 }
-.empty-hint-card b { color: var(--accent-hover); }
+.empty-hint-card b { color: var(--overlay-accent); }
 
 .canvas-toolbar {
   position: absolute; right: 16px; bottom: 44px; display: flex; flex-direction: column; gap: 6px; z-index: 5;
 }
 .canvas-toolbar button {
-  width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(26,31,38,.85);
-  color: var(--text-primary); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: var(--overlay-bg);
+  color: var(--overlay-text); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
 }
-.canvas-toolbar button:hover { border-color: var(--accent); color: var(--accent-hover); }
+.canvas-toolbar button:hover { border-color: var(--overlay-accent); color: var(--overlay-accent); }
 
 #statusBar {
   position: absolute; left: 14px; bottom: 12px; font-family: var(--font-mono); font-size: 11.5px;
@@ -203,10 +204,10 @@ input[type="text"] { width: 100%; }
 
 #view3DToolbar {
   position: absolute; left: 16px; bottom: 16px; display: none; gap: 14px; align-items: center;
-  background: rgba(20,24,29,.82); border: 1px solid var(--border-soft); border-radius: 10px; padding: 9px 14px; z-index: 5;
-  color: var(--text-secondary); font-size: 12px;
+  background: var(--overlay-bg); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 9px 14px; z-index: 5;
+  color: var(--overlay-text-muted); font-size: 12px;
 }
-#view3DToolbar input[type="range"] { width: 120px; accent-color: var(--accent); }
+#view3DToolbar input[type="range"] { width: 120px; accent-color: var(--overlay-accent); }
 .hint3d { position: absolute; right: 16px; top: 14px; font-size: 11.5px; color: rgba(255,255,255,.55); background: rgba(20,24,29,.55); padding: 6px 10px; border-radius: 7px; z-index: 5; max-width: 220px; line-height: 1.4; }
 
 /* ---------------- properties panel ---------------- */
@@ -237,7 +238,7 @@ input[type="text"] { width: 100%; }
 /* ---------------- watermark ---------------- */
 .asp-watermark {
   position: fixed; right: 12px; bottom: 8px; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em;
-  text-transform: uppercase; color: rgba(255,255,255,.28); pointer-events: none; z-index: 60;
+  text-transform: uppercase; color: rgba(60, 47, 30, .38); pointer-events: none; z-index: 60;
 }
 
 /* ---------------- scrollbars ---------------- */
@@ -281,7 +282,7 @@ input[type="text"] { width: 100%; }
     <button class="btn btn-icon" id="helpBtn" title="Подсказка">?</button>
   </div>
 
-  <div class="workspace">
+  <div class="workspace" id="workspace">
     <div class="left-rail" id="leftRail">
       <div class="rail-section">
         <h4 class="rail-title">Планировка</h4>
@@ -2954,6 +2955,8 @@ function switchView(v) {
   document.getElementById('view2DPane').style.display = v === '2d' ? 'block' : 'none';
   document.getElementById('view3DPane').style.display = v === '3d' ? 'block' : 'none';
   document.getElementById('leftRail').style.display = v === '2d' ? 'flex' : 'none';
+  document.getElementById('rightRail').style.display = v === '2d' ? 'flex' : 'none';
+  document.getElementById('workspace').classList.toggle('mode-3d', v === '3d');
   document.getElementById('statusBar').style.display = v === '2d' ? 'block' : 'none';
   document.getElementById('view3DToolbar').style.display = v === '3d' ? 'flex' : 'none';
   renderToolUI();
