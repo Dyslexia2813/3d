@@ -1,0 +1,13 @@
+{
+  "name": "asp-planner-photo",
+  "version": "1.0.0",
+  "description": "Source of vPhoto.html (photoreal planner)",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "three": "0.160.0"
+  },
+  "private": true
+}

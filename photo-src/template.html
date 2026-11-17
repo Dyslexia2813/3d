@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="favicon.png">	
+<title>ASP Studio — Фотореалистичный планировщик</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-app: #ddc9a0;
+  --bg-panel: #e4d3ab;
+  --bg-panel-2: #d8c294;
+  --bg-panel-3: #c9b17f;
+  --border: #c2ab80;
+  --border-soft: #b39a6c;
+  --text-primary: #3c2f1e;
+  --text-secondary: #59462e;
+  --text-muted: #75603f;
+  --accent: #bb7530;
+  --accent-hover: #9c611f;
+  --accent-ink: #2a1806;
+  --danger: #b8492f;
+  --danger-hover: #c65d3f;
+  --success: #4a9d6f;
+  --canvas-bg: #eef1f2;
+  --grid-minor: #d7dee3;
+  --grid-major: #b9c4cd;
+  --balcony-fill: rgba(148, 176, 154, .22);
+  --overlay-bg: rgba(38, 28, 15, .88);
+  --overlay-text: #f5ead4;
+  --overlay-text-muted: #d8c4a4;
+  --overlay-accent: #ffc178;
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font-family: inherit; color: inherit; }
+input, select { background: var(--bg-panel-2); border: 1px solid var(--border-soft); color: var(--text-primary); border-radius: 6px; padding: 5px 8px; font-size: 13px; }
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+input[type="number"] { width: 88px; font-family: var(--font-mono); }
+input[type="color"] { width: 44px; height: 28px; padding: 2px; cursor: pointer; }
+input[type="text"] { width: 100%; }
+
+/* ---------------- app shell ---------------- */
+#app { display: grid; grid-template-rows: 56px 1fr; height: 100vh; }
+
+.topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; background: var(--bg-panel); border-bottom: 1px solid var(--border);
+  z-index: 20;
+}
+.brand { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+.brand-mark {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent), #8a5220);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fbf3e6;
+}
+.brand-name { font-family: var(--font-display); font-weight: 600; font-size: 14.5px; letter-spacing: .2px; white-space: nowrap; }
+.topbar-sep { width: 1px; align-self: stretch; margin: 10px 2px; background: var(--border-soft); }
+.topbar-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+#projectNameInput { width: 190px; font-family: var(--font-display); font-weight: 500; }
+#ceilingHeightInput { width: 68px; }
+.topbar-spacer { flex: 1; }
+.view-tabs { display: flex; background: var(--bg-panel-2); border: 1px solid var(--border-soft); border-radius: 8px; padding: 3px; gap: 2px; }
+.view-tabs button {
+  border: none; background: transparent; color: var(--text-secondary); padding: 6px 14px; border-radius: 6px;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; letter-spacing: .2px;
+}
+.view-tabs button.active { background: var(--accent); color: var(--accent-ink); }
+
+.btn {
+  border: 1px solid var(--border-soft); background: var(--bg-panel-2); color: var(--text-primary);
+  padding: 7px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent-hover); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn:disabled:hover { border-color: var(--border-soft); color: var(--text-primary); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-ink); }
+.btn-danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-block { width: 100%; justify-content: center; margin-top: 14px; }
+.btn-mini { padding: 4px 8px; font-size: 11.5px; }
+.btn-icon { padding: 7px 9px; }
+
+/* ---------------- workspace grid ---------------- */
+.workspace { display: grid; grid-template-columns: 276px 1fr 284px; min-height: 0; }
+.workspace.mode-3d { grid-template-columns: 1fr; }
+
+.left-rail, .right-rail {
+  background: var(--bg-panel); border-right: 1px solid var(--border);
+  overflow-y: auto; display: flex; flex-direction: column; min-height: 0;
+}
+.right-rail { border-right: none; border-left: 1px solid var(--border); }
+
+.rail-section { padding: 14px 14px 16px; border-bottom: 1px solid var(--border); }
+.rail-section:last-child { border-bottom: none; flex: 1; }
+.rail-title {
+  font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-muted); margin: 0 0 10px;
+}
+.tool-btn {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  background: var(--bg-panel-2); border: 1px solid var(--border-soft); color: var(--text-primary);
+  padding: 9px 10px; border-radius: 7px; font-size: 13px; cursor: pointer; margin-bottom: 6px;
+}
+.tool-btn:last-child { margin-bottom: 0; }
+.tool-btn:hover { border-color: var(--accent); }
+.tool-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.tool-btn .ic { font-size: 15px; width: 18px; text-align: center; }
+.tool-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+.field-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 12.5px; color: var(--text-secondary); }
+.field-row select { flex: 1; }
+.field-row input[type="number"] { flex: 1; width: auto; }
+
+#lockBtn { width: 100%; justify-content: center; margin-top: 4px; background: var(--bg-panel-3); }
+#lockBtn.is-locked { background: rgba(209, 139, 61, .14); border-color: var(--accent); color: var(--accent-hover); }
+
+.furn-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.furn-tab {
+  border: 1px solid var(--border-soft); background: var(--bg-panel-2); color: var(--text-secondary);
+  padding: 5px 10px; border-radius: 999px; font-size: 11.5px; cursor: pointer; font-weight: 500;
+}
+.furn-tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.furn-head { display: flex; align-items: baseline; justify-content: space-between; }
+.furn-count { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+#furnSearch { margin-bottom: 9px; }
+.furn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.furn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: #f6efe0; border: 1px solid var(--border-soft); border-radius: 9px;
+  padding: 5px 5px 7px; cursor: pointer; font-size: 11px; color: var(--text-secondary); text-align: center; line-height: 1.2;
+}
+.furn-item:hover { border-color: var(--accent); color: var(--text-primary); box-shadow: 0 2px 8px rgba(60,40,10,.15); }
+.furn-thumb { width: 100%; aspect-ratio: 1; border-radius: 6px; background: radial-gradient(circle at 50% 40%, #fffaf0, #eadfc9); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.furn-thumb img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity .25s; }
+.furn-thumb img.ready { opacity: 1; }
+.furn-name { font-weight: 600; color: var(--text-primary); }
+.furn-dims { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+.variant-link { font-size: 12px; color: var(--text-secondary); text-decoration: none; border: 1px dashed var(--border-soft); padding: 6px 10px; border-radius: 7px; white-space: nowrap; }
+.variant-link:hover { color: var(--accent-hover); border-color: var(--accent); }
+.badge-photo { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: #2c2318; color: #ffc178; padding: 2px 6px; border-radius: 4px; margin-left: 4px; }
+
+/* ---------------- center pane ---------------- */
+.center-pane { position: relative; min-width: 0; background: var(--canvas-bg); overflow: hidden; }
+#view2DPane, #view3DPane { position: absolute; inset: 0; }
+#editorSvg { width: 100%; height: 100%; display: block; touch-action: none; cursor: default; background: var(--canvas-bg); }
+#editorSvg.cursor-crosshair { cursor: crosshair; }
+#threeContainer { position: absolute; inset: 0; }
+#threeContainer canvas { display: block; width: 100%; height: 100%; }
+
+.wall-body { transition: filter .1s; }
+.wall-g.is-selected .wall-body { filter: brightness(1.12); }
+.wall-g:not(.is-locked) .wall-body:hover { filter: brightness(1.2); cursor: move; }
+.wall-g.is-locked .wall-body { cursor: default; }
+.endpoint-handle circle { fill: #fff; stroke: var(--accent); stroke-width: 2.4; cursor: grab; }
+.endpoint-handle:hover circle { fill: var(--accent); }
+
+.opening-g { cursor: move; }
+.opening-g.is-selected polygon:first-child { filter: drop-shadow(0 0 0 2px var(--accent)); }
+
+.balcony-g { cursor: move; }
+.balcony-g.is-selected polygon { filter: brightness(1.08); }
+
+.furn-g { cursor: move; }
+.furn-g polygon { stroke-linejoin: round; }
+.furn-g.is-selected polygon { stroke: var(--accent) !important; stroke-width: 2.4 !important; }
+
+.dim-label { pointer-events: none; }
+.dim-label text { font-family: var(--font-mono); font-size: 12px; fill: #4b5560; paint-order: stroke; stroke: var(--canvas-bg); stroke-width: 3px; }
+.dim-label--draft text { fill: #a9642a; font-weight: 600; }
+.furn-label text { fill: rgba(0,0,0,.62); font-size: 10.5px; font-family: var(--font-body); font-weight: 600; }
+
+.empty-hint {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.empty-hint-card {
+  background: var(--overlay-bg); color: var(--overlay-text); border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px; padding: 22px 28px; max-width: 360px; text-align: center; font-size: 13.5px; line-height: 1.55;
+}
+.empty-hint-card b { color: var(--overlay-accent); }
+
+.canvas-toolbar {
+  position: absolute; right: 16px; bottom: 44px; display: flex; flex-direction: column; gap: 6px; z-index: 5;
+}
+.canvas-toolbar button {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: var(--overlay-bg);
+  color: var(--overlay-text); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+}
+.canvas-toolbar button:hover { border-color: var(--overlay-accent); color: var(--overlay-accent); }
+
+#statusBar {
+  position: absolute; left: 14px; bottom: 12px; font-family: var(--font-mono); font-size: 11.5px;
+  color: #52606b; background: rgba(255,255,255,.75); padding: 4px 9px; border-radius: 6px; z-index: 5;
+}
+#statusBar.flash { color: #a9642a; font-weight: 600; }
+
+#view3DToolbar {
+  position: absolute; left: 16px; right: 16px; bottom: 16px; display: none; gap: 10px 16px; align-items: center; flex-wrap: wrap;
+  background: var(--overlay-bg); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px 14px; z-index: 5;
+  color: var(--overlay-text-muted); font-size: 12px; backdrop-filter: blur(6px);
+}
+#view3DToolbar input[type="range"] { width: 110px; accent-color: var(--overlay-accent); }
+#view3DToolbar .grp { display: flex; align-items: center; gap: 6px; }
+#view3DToolbar .seg { display: flex; border: 1px solid rgba(255,255,255,.18); border-radius: 7px; overflow: hidden; }
+#view3DToolbar .seg button { background: transparent; border: none; color: var(--overlay-text); padding: 5px 9px; font-size: 12px; cursor: pointer; }
+#view3DToolbar .seg button + button { border-left: 1px solid rgba(255,255,255,.14); }
+#view3DToolbar .seg button.active, #view3DToolbar .seg button:hover { background: rgba(255,193,120,.18); color: var(--overlay-accent); }
+#view3DToolbar select { background: rgba(255,255,255,.08); color: var(--overlay-text); border-color: rgba(255,255,255,.2); padding: 4px 6px; font-size: 12px; }
+#view3DToolbar select option { color: #222; }
+#view3DToolbar .btn { background: rgba(255,255,255,.08); color: var(--overlay-text); border-color: rgba(255,255,255,.2); }
+#view3DToolbar .btn:hover { color: var(--overlay-accent); border-color: var(--overlay-accent); }
+#view3DToolbar .btn-primary { background: var(--overlay-accent); color: #2a1806; border-color: var(--overlay-accent); }
+#view3DToolbar .spacer { flex: 1; }
+.hint3d { position: absolute; right: 16px; top: 14px; pointer-events: none; font-size: 11.5px; color: rgba(255,255,255,.55); background: rgba(20,24,29,.55); padding: 6px 10px; border-radius: 7px; z-index: 5; max-width: 220px; line-height: 1.4; }
+
+/* ---------------- properties panel ---------------- */
+#propTitle { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; margin: 0 0 12px; color: var(--text-primary); }
+.prop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.prop-row label { font-size: 12.5px; color: var(--text-secondary); flex-shrink: 0; }
+.prop-row select, .prop-row input[type="number"], .prop-row input[type="text"] { max-width: 128px; }
+.prop-empty { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+.prop-hint { font-size: 11.5px; color: var(--text-muted); margin: -3px 0 10px; line-height: 1.4; }
+.prop-hint--warn { color: var(--accent-hover); }
+.rot-wrap { display: flex; align-items: center; gap: 5px; }
+.rot-wrap input { width: 56px; }
+
+/* ---------------- help modal ---------------- */
+#helpOverlay {
+  position: fixed; inset: 0; background: rgba(10,12,15,.6); display: none; align-items: center; justify-content: center; z-index: 50;
+}
+.help-card {
+  width: min(560px, 92vw); max-height: 82vh; overflow-y: auto; background: var(--bg-panel); border: 1px solid var(--border-soft);
+  border-radius: 14px; padding: 24px 26px; box-shadow: 0 30px 70px rgba(0,0,0,.5);
+}
+.help-card h2 { font-family: var(--font-display); font-size: 18px; margin: 0 0 4px; }
+.help-card p.sub { color: var(--text-muted); font-size: 12.5px; margin: 0 0 18px; }
+.help-card h3 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent-hover); margin: 18px 0 8px; }
+.help-card ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.75; color: var(--text-primary); }
+.help-card .help-close-row { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+/* ---------------- watermark ---------------- */
+.asp-watermark {
+  position: fixed; right: 12px; bottom: 8px; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: rgba(60, 47, 30, .38); pointer-events: none; z-index: 60;
+}
+
+/* ---------------- scrollbars ---------------- */
+.left-rail::-webkit-scrollbar, .right-rail::-webkit-scrollbar, .help-card::-webkit-scrollbar { width: 9px; }
+.left-rail::-webkit-scrollbar-thumb, .right-rail::-webkit-scrollbar-thumb, .help-card::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 6px; }
+
+@media (max-width: 1560px) { .variant-link span, .topbar-field label { display: none; } }
+.view-tabs button { white-space: nowrap; }
+@media (max-width: 980px) {
+  .workspace { grid-template-columns: 230px 1fr 240px; }
+  .brand-name { display: none; }
+  #projectNameInput { width: 120px; }
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div class="brand-name">ASP Planner <span class="badge-photo">Photo</span></div>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-field">
+      <label for="projectNameInput">Проект</label>
+      <input type="text" id="projectNameInput" value="Новый проект" />
+    </div>
+    <div class="topbar-field">
+      <label for="ceilingHeightInput">Высота потолка, см</label>
+      <input type="number" id="ceilingHeightInput" value="270" min="150" max="600" step="5" />
+    </div>
+    <div class="topbar-sep"></div>
+    <button class="btn" id="newProjectBtn" title="Новый проект">🗎 Новый</button>
+    <button class="btn" id="saveProjectBtn" title="Сохранить проект в файл">💾 Сохранить</button>
+    <button class="btn" id="loadProjectBtn" title="Загрузить проект из файла (подходят и файлы из классического планировщика)">📂 Открыть</button>
+    <button class="btn" id="demoBtn" title="Загрузить меблированную квартиру-пример">✨ Пример</button>
+    <input type="file" id="loadFileInput" accept="application/json,.json" style="display:none" />
+    <div class="topbar-spacer"></div>
+    <a class="variant-link" href="vClaude.html" title="Открыть прежний (классический) планировщик">← <span>Классическая версия</span></a>
+    <div class="view-tabs">
+      <button id="viewTab2D" class="active" type="button">2D План</button>
+      <button id="viewTab3D" type="button">3D Вид</button>
+    </div>
+    <button class="btn btn-icon" id="helpBtn" title="Подсказка">?</button>
+  </div>
+
+  <div class="workspace" id="workspace">
+    <div class="left-rail" id="leftRail">
+      <div class="rail-section">
+        <h4 class="rail-title">Планировка</h4>
+        <button class="tool-btn" data-tool="select" type="button"><span class="ic">🖱️</span> Выбор и перемещение</button>
+        <button class="tool-btn" id="drawWallBtn" data-tool="draw-wall" type="button"><span class="ic">📐</span> Рисовать стены</button>
+        <div class="field-row">
+          <label for="wallTypeSelect">Тип стены</label>
+          <select id="wallTypeSelect">
+            <option value="exterior">Наружная</option>
+            <option value="interior">Внутренняя</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="wallThicknessInput">Толщина, см</label>
+          <input type="number" id="wallThicknessInput" value="25" min="4" max="60" step="1" />
+        </div>
+        <button class="btn" id="lockBtn" type="button">🔒 Закрепить планировку</button>
+      </div>
+
+      <div class="rail-section">
+        <h4 class="rail-title">Проёмы</h4>
+        <button class="tool-btn" data-tool="add-window" type="button"><span class="ic">🪟</span> Окно</button>
+        <button class="tool-btn" data-tool="add-doorswing" type="button"><span class="ic">🚪</span> Дверь распашная</button>
+        <button class="tool-btn" data-tool="add-doorsliding" type="button"><span class="ic">▭</span> Дверь сдвижная</button>
+        <button class="tool-btn" data-tool="add-arch" type="button"><span class="ic">⤾</span> Арка</button>
+      </div>
+
+      <div class="rail-section">
+        <h4 class="rail-title">Балкон</h4>
+        <button class="tool-btn" data-tool="add-balcony" type="button"><span class="ic">▤</span> Добавить балкон</button>
+      </div>
+
+      <div class="rail-section">
+        <div class="furn-head"><h4 class="rail-title">Каталог мебели</h4><span class="furn-count" id="furnCount"></span></div>
+        <input type="text" id="furnSearch" placeholder="Поиск: диван, лампа, ванна…" autocomplete="off" />
+        <div class="furn-tabs" id="furnTabs"></div>
+        <div class="furn-grid" id="furnGrid"></div>
+      </div>
+    </div>
+
+    <div class="center-pane">
+      <div id="view2DPane">
+        <svg id="editorSvg">
+          <defs>
+            <pattern id="pMinor" width="50" height="50" patternUnits="userSpaceOnUse">
+              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#d7dee3" stroke-width="0.6" />
+            </pattern>
+            <pattern id="pMajor" width="500" height="500" patternUnits="userSpaceOnUse">
+              <path d="M 500 0 L 0 0 0 500" fill="none" stroke="#b9c4cd" stroke-width="1.1" />
+            </pattern>
+          </defs>
+          <g id="worldGroup">
+            <rect x="-4000" y="-4000" width="8000" height="8000" fill="url(#pMinor)"></rect>
+            <rect x="-4000" y="-4000" width="8000" height="8000" fill="url(#pMajor)"></rect>
+            <line x1="-4000" y1="0" x2="4000" y2="0" stroke="#c3cdd6" stroke-width="1.4"></line>
+            <line x1="0" y1="-4000" x2="0" y2="4000" stroke="#c3cdd6" stroke-width="1.4"></line>
+            <g id="balconyLayer"></g>
+            <g id="wallLayer"></g>
+            <g id="furnitureLayer"></g>
+            <g id="draftLayer"></g>
+            <g id="handleLayer"></g>
+          </g>
+        </svg>
+        <div class="empty-hint" id="emptyHint">
+          <div class="empty-hint-card">
+            <b>Начните с планировки.</b><br />
+            Слева выберите «Рисовать стены» и кликами мыши нарисуйте контур квартиры.
+            <b>Esc</b> — закончить стену, <b>Backspace</b> — отменить последнюю точку.
+            Подробнее — кнопка «?» вверху.<br /><br />
+            <button class="btn btn-primary" id="hintDemoBtn" type="button" style="pointer-events:auto">✨ Открыть пример квартиры</button>
+          </div>
+        </div>
+        <div class="canvas-toolbar">
+          <button id="zoomInBtn" title="Приблизить" type="button">+</button>
+          <button id="zoomOutBtn" title="Отдалить" type="button">−</button>
+          <button id="zoomFitBtn" title="Показать всё" type="button">⤢</button>
+        </div>
+        <div id="statusBar"></div>
+      </div>
+      <div id="view3DPane" style="display:none">
+        <div id="threeContainer"></div>
+        <div class="hint3d">ЛКМ — вращение · колесо — масштаб · ПКМ — сдвиг</div>
+        <div id="view3DToolbar">
+          <div class="grp"><span>Свет</span>
+            <div class="seg">
+              <button type="button" data-time="morning">🌅 Утро</button>
+              <button type="button" data-time="day" class="active">☀️ День</button>
+              <button type="button" data-time="evening">🌇 Вечер</button>
+              <button type="button" data-time="night">🌙 Ночь</button>
+            </div>
+          </div>
+          <div class="grp"><span>Солнце</span><input type="range" id="sunAzInput" min="0" max="360" step="5" value="135" title="Направление солнца" /></div>
+          <div class="grp"><span>Стены</span><input type="range" id="wallHeightPctInput" min="30" max="100" step="5" value="100" title="Высота стен в 3D" /></div>
+          <div class="grp"><span>Камера</span>
+            <div class="seg">
+              <button type="button" id="resetViewBtn">3/4</button>
+              <button type="button" id="camTopBtn">Сверху</button>
+              <button type="button" id="camEyeBtn">Изнутри</button>
+            </div>
+          </div>
+          <div class="grp"><span>Качество</span>
+            <select id="qualitySelect"><option value="high">Высокое</option><option value="standard">Быстрое</option></select>
+          </div>
+          <div class="spacer"></div>
+          <div class="grp">
+            <select id="snapshotSize" title="Размер снимка по длинной стороне"><option value="1920">1920 px</option><option value="3000" selected>3000 px</option><option value="4096">4096 px</option></select>
+            <button class="btn btn-primary btn-mini" id="snapshotBtn" type="button">📸 Снимок</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-rail" id="rightRail">
+      <div class="rail-section">
+        <h4 id="propTitle">Свойства</h4>
+        <div id="propBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="helpOverlay">
+  <div class="help-card">
+    <h2>Как пользоваться ASP Studio Photo</h2>
+    <p class="sub">Фотореалистичная версия планировщика: планировка и мебель — в 2D, «буклетная» визуализация — в 3D. Прежняя версия доступна по ссылке «Классическая версия» вверху; файлы проектов совместимы в обе стороны.</p>
+
+    <h3>Стены</h3>
+    <ul>
+      <li>«Рисовать стены»: кликайте по плану, чтобы ставить точки ломаной линии. <b>Esc</b> или двойной клик — закончить текущую цепочку стен (инструмент останется включён). <b>Backspace</b> — отменить последнюю точку.</li>
+      <li>В режиме «Выбор» перетаскивайте стену целиком или её концы (кружки на выделенной стене), чтобы изменить планировку. Длину, толщину, тип и цвет можно точно задать в панели справа.</li>
+      <li>Когда планировка готова — нажмите «Закрепить планировку», чтобы не сдвинуть её случайно. Проёмы и мебель можно добавлять в любой момент.</li>
+    </ul>
+
+    <h3>Окна, двери, арки, балкон</h3>
+    <ul>
+      <li>Выберите «Окно», «Дверь распашная/сдвижная» или «Арку» и кликните по нужной стене — проём появится в точке клика.</li>
+      <li>Перетаскивайте проём вдоль стены мышью; ширину, высоту, высоту подоконника, направление открывания и цвет — в панели справа.</li>
+      <li>«Добавить балкон» ставит балкон у ближайшей наружной стены; дальше его можно перетаскивать, менять размеры и высоту ограждения.</li>
+    </ul>
+
+    <h3>Мебель</h3>
+    <ul>
+      <li>Каталог — более 100 моделей в 11 разделах (гостиная, спальня, кухня, столовая, кабинет, детская, прихожая, ванная, свет, декор, отделка). Есть поиск по названию.</li>
+      <li>Кликните по предмету — он появится по центру плана. Перетаскивайте мышью; <b>R</b> — повернуть на 90°, <b>Ctrl+D</b> — дублировать.</li>
+      <li>Справа меняются размеры, высота от пола и материалы: ткань / бархат / букле / кожа, породы дерева, мрамор, металл ножек и ручек, столешницы. Толстая линия на плане — лицевая сторона предмета.</li>
+      <li>Когда ничего не выбрано, справа — отделка всей квартиры: покрытие пола, цвет стен и фасада. Для ванной или кухни положите «Пол: плитка (зона)» из раздела «Отделка».</li>
+    </ul>
+
+    <h3>3D и проект</h3>
+    <ul>
+      <li>Вкладка «3D Вид»: ЛКМ — вращение камеры, колесо — масштаб, ПКМ или средняя кнопка — сдвиг. Камера «Изнутри» — вид с высоты человеческого роста.</li>
+      <li>«Свет»: утро, день, вечер, ночь. Вечером и ночью включаются светильники из раздела «Свет». Ползунок «Солнце» поворачивает солнце и тени.</li>
+      <li>«📸 Снимок» сохраняет картинку в высоком разрешении (до 4096 px) — для презентаций и буклетов.</li>
+      <li>Ползунок «Стены» временно занижает стены, чтобы удобнее рассматривать интерьер сверху.</li>
+      <li>«Сохранить» скачивает файл проекта (.json) на диск. «Открыть» загружает ранее сохранённый файл обратно.</li>
+    </ul>
+
+    <div class="help-close-row">
+      <button class="btn btn-primary" id="helpCloseBtn" type="button">Понятно</button>
+    </div>
+  </div>
+</div>
+
+<div class="asp-watermark">ASP Studio · Photo</div>
+
+<script>
+/*__BUNDLE__*/
+</script>
+</body>
+</html>
